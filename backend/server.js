@@ -6,18 +6,28 @@ const session = require("express-session");
 const passport = require("./utils/passport");
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 
-app.use(cors());
+app.use(
+  cors({
+    origin: FRONTEND_URL,
+    credentials: true,
+  })
+);
 app.use(express.json());
-
-// passport
 
 app.use(
   session({
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 24 * 60 * 60 * 1000,
+    },
   })
 );
 
@@ -29,36 +39,30 @@ function isLoggedIn(req, res, next) {
     return next();
   }
 
-  res.redirect("/");
+  return res.status(401).json({ message: "Not authenticated" });
 }
 
-app.get("/profile", isLoggedIn, (req, res) => {
-  res.send(`
-    <h1>Profile</h1>
-    <p>Name: ${req.user.displayName}</p>
-    <p>Email: ${req.user.emails[0].value}</p>
-    <img src="${req.user.photos[0].value}" />
-    <br><br>
-    <a href="/logout">Logout</a>
-  `);
+app.get("/api/auth/me", isLoggedIn, (req, res) => {
+  res.json({
+    user: {
+      id: req.user.id,
+      name: req.user.displayName,
+      email: req.user.emails?.[0]?.value || null,
+      photo: req.user.photos?.[0]?.value || null,
+    },
+  });
 });
 
 // MongoDB Connection
 const mongoURI = process.env.MONGODB_URI;
-mongoose.connect(mongoURI)
-  .then(() => console.log('MongoDB connected successfully'))
-  .catch(err => console.error('MongoDB connection error:', err));
-
-// Root route
-
-
-
+if (mongoURI) {
+  mongoose.connect(mongoURI)
+    .then(() => console.log("MongoDB connected successfully"))
+    .catch(err => console.error("MongoDB connection error:", err));
+}
 
 app.get("/", (req, res) => {
-  res.send(`
-    <h1>Home</h1>
-    <a href="/auth/google">Login with Google</a>
-  `);
+  res.json({ message: "Mock Interview API is running" });
 });
 
 app.get(
@@ -71,18 +75,30 @@ app.get(
 app.get(
   "/auth/google/callback",
   passport.authenticate("google", {
-    failureRedirect: "/",
+    failureRedirect: `${FRONTEND_URL}/?login=failed`,
   }),
   (req, res) => {
-    res.redirect("/profile");
+    res.redirect(`${FRONTEND_URL}/?login=success`);
   }
 );
 
-app.get("/auth/logout", (req, res) => {
-  req.logout(() => {
-    res.redirect("/");
+app.post("/api/auth/logout", (req, res, next) => {
+  req.logout((error) => {
+    if (error) {
+      return next(error);
+    }
+
+    req.session.destroy((sessionError) => {
+      if (sessionError) {
+        return next(sessionError);
+      }
+
+      res.clearCookie("connect.sid");
+      return res.status(204).end();
+    });
   });
 });
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });

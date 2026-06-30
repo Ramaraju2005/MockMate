@@ -1,3 +1,4 @@
+require("dotenv").config();
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const GitHubStrategy = require("passport-github2").Strategy;
@@ -15,7 +16,10 @@ console.log("BACKEND_URL =", BACKEND_URL);
 console.log("GOOGLE_CALLBACK_URL =", GOOGLE_CALLBACK_URL);
 console.log("GITHUB_CALLBACK_URL =", GITHUB_CALLBACK_URL);
 console.log("FRONTEND_URL =", FRONTEND_URL);
-
+console.log("GOOGLE_CLIENT_ID =", process.env.GOOGLE_CLIENT_ID);
+console.log("GOOGLE_CLIENT_SECRET =", process.env.GOOGLE_CLIENT_SECRET);
+console.log("GITHUB_CLIENT_ID =", process.env.GITHUB_CLIENT_ID);
+console.log("GITHUB_CLIENT_SECRET =", process.env.GITHUB_CLIENT_SECRET);
 // ── Google Strategy ──────────────────────────────────────────────────────────
 passport.use(
   new GoogleStrategy(

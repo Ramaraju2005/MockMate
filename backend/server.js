@@ -5,6 +5,10 @@ require('dotenv').config();
 const session = require("express-session");
 const passport = require("./utils/passport");
 const { AccessToken } = require("livekit-server-sdk");
+const { generateQuestions, evaluateAnswers } = require('./utils/aiInterview');
+const { generateCodingQuestions, evaluateCodingSession } = require('./utils/codingInterview');
+const { executeCode } = require('./utils/judge0');
+const { buildLanguageTemplate } = require('./utils/languageTemplates');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -74,6 +78,111 @@ function isLoggedIn(req, res, next) {
 }
 
 // ── API routes ────────────────────────────────────────────────────────────────
+app.post('/api/interview/generate', isLoggedIn, async (req, res) => {
+  try {
+    const { subject, difficulty, questionCount } = req.body;
+
+    if (!subject || !difficulty || !questionCount) {
+      return res.status(400).json({ error: 'Subject, difficulty, and question count are required.' });
+    }
+
+    const questions = await generateQuestions({
+      subject,
+      difficulty,
+      questionCount: Number(questionCount),
+    });
+
+    res.json({ questions });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to generate interview questions.' });
+  }
+});
+
+app.post('/api/interview/evaluate', isLoggedIn, async (req, res) => {
+  try {
+    const { questions, answers } = req.body;
+
+    if (!Array.isArray(questions) || !Array.isArray(answers)) {
+      return res.status(400).json({ error: 'Questions and answers must be arrays.' });
+    }
+
+    const report = await evaluateAnswers({ questions, answers });
+    res.json({ report });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to evaluate interview answers.' });
+  }
+});
+
+app.post('/api/coding/generate', isLoggedIn, async (req, res) => {
+  try {
+    const { topics, difficulty, questionCount, aiMode } = req.body;
+    if (!questionCount) {
+      return res.status(400).json({ error: 'Question count is required.' });
+    }
+
+    const questions = await generateCodingQuestions({
+      topics: Array.isArray(topics) ? topics : [],
+      difficulty: difficulty || 'Medium',
+      questionCount: Number(questionCount),
+      aiMode: Boolean(aiMode),
+    });
+
+    res.json({ questions });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to generate coding interview questions.' });
+  }
+});
+
+app.post('/api/coding/execute', isLoggedIn, async (req, res) => {
+  try {
+    const { language, editableCode, question, readOnlyCode } = req.body;
+    if (!language || !editableCode || !question) {
+      return res.status(400).json({ error: 'Language, editable code, and question are required.' });
+    }
+
+    const template = buildLanguageTemplate(question, language);
+    const combinedCode = `${editableCode}\n\n${readOnlyCode || template.readOnlySection}`;
+    const result = await executeCode({ language, code: combinedCode, input: '' });
+    res.json(result);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to execute code.' });
+  }
+});
+
+app.post('/api/coding/template', isLoggedIn, async (req, res) => {
+  try {
+    const { question, language } = req.body;
+    if (!question || !language) {
+      return res.status(400).json({ error: 'Question and language are required.' });
+    }
+
+    const template = buildLanguageTemplate(question, language);
+    res.json(template);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to generate starter template.' });
+  }
+});
+
+app.post('/api/coding/evaluate', isLoggedIn, async (req, res) => {
+  try {
+    const { questions, sessionResults } = req.body;
+    if (!Array.isArray(questions) || !Array.isArray(sessionResults)) {
+      return res.status(400).json({ error: 'Questions and session results must be arrays.' });
+    }
+
+    const report = await evaluateCodingSession({ questions, sessionResults });
+    res.json({ report });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to evaluate coding interview.' });
+  }
+});
+
 app.get("/api/auth/me", isLoggedIn, (req, res) => {
   res.json({
     user: {

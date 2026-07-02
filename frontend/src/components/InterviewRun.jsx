@@ -8,6 +8,7 @@ export default function InterviewRun({ questions, timerMinutes, onComplete, onBa
   const [timeLeft, setTimeLeft] = useState(timerMinutes * 60)
   const [error, setError] = useState('')
   const recognitionRef = useRef(null)
+  const finalTranscriptRef = useRef('')
 
   const currentQuestion = questions[currentIndex]
   const progress = useMemo(() => ((currentIndex + 1) / questions.length) * 100, [currentIndex, questions.length])
@@ -26,19 +27,18 @@ export default function InterviewRun({ questions, timerMinutes, onComplete, onBa
 
     recognition.onresult = (event) => {
       let interim = ''
-      let finalText = ''
 
       for (let i = event.resultIndex; i < event.results.length; i += 1) {
         const result = event.results[i]
         const text = result[0].transcript
         if (result.isFinal) {
-          finalText += `${text} `
+          finalTranscriptRef.current += `${text} `
         } else {
           interim += text
         }
       }
 
-      setTranscript((prev) => `${prev}${finalText}${interim}`.trim())
+      setTranscript(`${finalTranscriptRef.current}${interim}`.trim())
     }
 
     recognition.onerror = () => {
@@ -83,6 +83,7 @@ export default function InterviewRun({ questions, timerMinutes, onComplete, onBa
       return
     }
 
+    finalTranscriptRef.current = ''
     setTranscript('')
     recognitionRef.current.start()
     setIsListening(true)
@@ -93,6 +94,7 @@ export default function InterviewRun({ questions, timerMinutes, onComplete, onBa
     const updated = [...answers]
     updated[currentIndex] = currentAnswer
     setAnswers(updated)
+    finalTranscriptRef.current = ''
 
     if (currentIndex < questions.length - 1) {
       setCurrentIndex((prev) => prev + 1)

@@ -1,9 +1,12 @@
-﻿import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { Room, createLocalVideoTrack, createLocalAudioTrack } from 'livekit-client'
 
 const API_URL = import.meta.env.VITE_API_URL || ''
 
-export default function RoomPage({ roomId, roomUrl, onLeave }) {
+export default function RoomPage() {
+  const { roomId } = useParams()
+  const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [remoteCount, setRemoteCount] = useState(0)
@@ -156,25 +159,25 @@ export default function RoomPage({ roomId, roomUrl, onLeave }) {
   }
 
   return (
-    <div className="min-h-screen bg-blue-50 px-6 py-10">
+    <div className="min-h-screen bg-blue-50 dark:bg-gray-900 px-6 py-10 transition-colors">
       <div className="max-w-7xl mx-auto space-y-8">
-        <div className="rounded-3xl bg-white p-8 shadow-xl">
+        <div className="rounded-3xl bg-white dark:bg-gray-800 p-8 shadow-xl">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-3xl font-bold text-gray-900">LiveKit Mock Interview</h2>
-              <p className="text-gray-600">Live audio and video with your peer in this room.</p>
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white">LiveKit Mock Interview</h2>
+              <p className="text-gray-600 dark:text-gray-300">Live audio and video with your peer in this room.</p>
             </div>
             <button
               type="button"
-              onClick={onLeave}
-              className="inline-flex items-center justify-center rounded-full border border-slate-300 px-6 py-3 text-slate-700 hover:bg-slate-50 transition"
+              onClick={() => navigate('/')}
+              className="inline-flex items-center justify-center rounded-full border border-slate-300 dark:border-gray-600 px-6 py-3 text-slate-700 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-gray-700 transition"
             >
               Leave Room
             </button>
           </div>
-          <div className="mt-6 rounded-2xl border border-blue-100 bg-blue-50 p-4">
+          <div className="mt-6 rounded-2xl border border-blue-100 dark:border-gray-700 bg-blue-50 dark:bg-gray-700 p-4">
             <p className="text-sm uppercase tracking-wide text-blue-700 mb-2">Room ID</p>
-            <p className="break-all text-blue-900">{roomId}</p>
+            <p className="break-all text-blue-900 dark:text-blue-200">{roomId}</p>
           </div>
         </div>
 
@@ -182,10 +185,10 @@ export default function RoomPage({ roomId, roomUrl, onLeave }) {
           <div className="rounded-3xl bg-white p-6 shadow-xl">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-xl font-semibold text-gray-900">Live Video</h3>
-                <p className="text-gray-600">Connected to room: {roomId}</p>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Live Video</h3>
+                <p className="text-gray-600 dark:text-gray-300">Connected to room: {roomId}</p>
               </div>
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-gray-500 dark:text-gray-400">
                 {remoteCount === 0 ? 'Waiting for peer to join...' : '🟢 Peer connected'}
               </div>
             </div>
@@ -236,12 +239,12 @@ export default function RoomPage({ roomId, roomUrl, onLeave }) {
             )}
           </div>
 
-          <div className="rounded-3xl bg-white p-6 shadow-xl">
-            <h3 className="text-xl font-semibold text-gray-900 mb-3">Session info</h3>
-            <p className="text-gray-600 mb-4">
+          <div className="rounded-3xl bg-white dark:bg-gray-800 p-6 shadow-xl">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">Session info</h3>
+            <p className="text-gray-600 dark:text-gray-300 mb-4">
               Copy and share this room ID with your peer if they are not already in the room.
             </p>
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 mb-4 break-all">
+            <div className="rounded-2xl border border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-700 dark:text-gray-100 p-4 mb-4 break-all">
               {roomId}
             </div>
             <button

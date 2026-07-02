@@ -213,6 +213,23 @@ app.get("/auth/google/callback", (req, res, next) => {
   })(req, res, next);
 });
 
+app.post("/api/auth/logout", (req, res) => {
+  req.logout((err) => {
+    if (err) {
+      console.error("Logout error:", err);
+      return res.status(500).json({ message: "Logout failed." });
+    }
+
+    req.session.destroy((destroyErr) => {
+      if (destroyErr) {
+        console.error("Session destroy error:", destroyErr);
+      }
+      res.clearCookie("connect.sid");
+      res.json({ message: "Logged out." });
+    });
+  });
+});
+
 app.get("/logout", (req, res) => {
   req.logout(() => {
     res.redirect("/");

@@ -1,141 +1,98 @@
-import { useEffect, useState } from 'react'
-import Navbar from './components/Navbar'
-import Dashboard from './components/Dashboard'
-import LoginPage from './components/LoginPage'
-import RoomSelectionPage from './components/RoomSelectionPage'
-import RoomPage from './components/RoomPage'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider } from "./context/ThemeContext";
+import { AuthProvider, useAuth } from './context/AuthContext';
+import Navbar from './components/Navbar';
+import Dashboard from './components/Dashboard';
 
-// During development we proxy /api and /auth to the backend via Vite.
-// Leave VITE_API_URL empty in dev to use relative paths.
-const API_URL = import.meta.env.VITE_API_URL || ''
-// const API_URL =
-//   "https://8zsgjjtr-3000.inc1.devtunnels.ms";
-console.log("API_URL =", API_URL);
+import LoginPage from './components/LoginPage';
+import RoomSelectionPage from './components/RoomSelectionPage';
+import RoomPage from './components/RoomPage';
 
-function App() {
-  const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-
-  useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const response = await fetch(`${API_URL}/api/auth/me`, {
-          credentials: 'include',
-        })
-        
-
-        if (response.status === 401) {
-          setUser(null)
-          return
-        }
-
-        if (!response.ok) {
-          throw new Error('Unable to check your login status.')
-        }
-
-        const data = await response.json()
-        setUser(data.user)
-      } catch (requestError) {
-        console.error(requestError)
-        setError('Could not connect to the backend. Make sure it is running.')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    loadUser()
-  }, [])
-
-  const login = () => {
-    window.location.href = `${API_URL}/auth/google`
-  }
-
-  const [view, setView] = useState('dashboard')
-  const [roomId, setRoomId] = useState('')
-  const [roomUrl, setRoomUrl] = useState('')
-
-  const logout = async () => {
-    setError('')
-
-    try {
-      const response = await fetch(`${API_URL}/api/auth/logout`, {
-        method: 'POST',
-        credentials: 'include',
-      })
-
-      if (!response.ok) {
-        throw new Error('Logout failed.')
-      }
-
-      setUser(null)
-      setView('dashboard')
-      setRoomId('')
-      setRoomUrl('')
-    } catch (requestError) {
-      console.error(requestError)
-      setError('Could not log out. Please try again.')
-    }
-  }
-
-  const startPractice = () => setView('room-selection')
-
-  const handleCreateRoom = (newRoomId, newRoomUrl) => {
-    setRoomId(newRoomId)
-    setRoomUrl(newRoomUrl)
-    setView('room')
-  }
-
-  const handleJoinRoom = (existingRoomId, existingRoomUrl) => {
-    setRoomId(existingRoomId)
-    setRoomUrl(existingRoomUrl)
-    setView('room')
-  }
-
-  const handleBack = () => {
-    setView('dashboard')
-  }
-
-  const handleLeaveRoom = () => {
-    setRoomId('')
-    setRoomUrl('')
-    setView('dashboard')
-  }
-
+// A simple wrapper to protect routes that require authentication
+const ProtectedRoute = ({ children }) => {
+  const { user, loading } = useAuth();
+  
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-100">
         <p className="text-xl text-gray-600">Loading...</p>
       </div>
-    )
+    );
   }
 
   if (!user) {
-    return <LoginPage onLogin={login} error={error} />
+    return <Navigate to="/login" replace />;
   }
 
-  if (view === 'room-selection') {
+  return children;
+};
+
+// A wrapper to handle the login page redirection if already logged in
+const LoginRoute = () => {
+  const { user, loading } = useAuth();
+  
+  if (loading) {
     return (
-      <RoomSelectionPage
-        onCreateRoom={handleCreateRoom}
-        onJoinRoom={handleJoinRoom}
-        onBack={handleBack}
-      />
-    )
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <p className="text-xl text-gray-600">Loading...</p>
+      </div>
+    );
   }
 
-  if (view === 'room') {
-    return (
-      <RoomPage roomId={roomId} roomUrl={roomUrl} onLeave={handleLeaveRoom} />
-    )
+  if (user) {
+    return <Navigate to="/" replace />;
   }
 
+  return <LoginPage />;
+};
+
+function App() {
   return (
-    <div className="flex flex-col min-h-screen">
-      <Navbar user={user} onLogout={logout} />
-      <Dashboard user={user} onStartPractice={startPractice} />
-    </div>
-  )
+    <ThemeProvider>
+      <AuthProvider>
+        <Router>
+          <div className="flex flex-col min-h-screen">
+            <Navbar />
+            <div className="flex-1 flex flex-col">
+              <Routes>
+                <Route path="/login" element={<LoginRoute />} />
+                
+                {/* Protected Routes */}
+                <Route 
+                  path="/" 
+                  element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/room-selection" 
+                  element={
+                    <ProtectedRoute>
+                      <RoomSelectionPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/room/:roomId" 
+                  element={
+                    <ProtectedRoute>
+                      <RoomPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                {/* Fallback route */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </div>
+
+          </div>
+        </Router>
+      </AuthProvider>
+    </ThemeProvider>
+  );
 }
 
-export default App
+export default App;

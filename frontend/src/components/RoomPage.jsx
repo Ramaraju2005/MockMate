@@ -1,12 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
 import { Room, createLocalVideoTrack, createLocalAudioTrack } from 'livekit-client'
 
 const API_URL = import.meta.env.VITE_API_URL || ''
 
-export default function RoomPage() {
-  const { roomId } = useParams()
-  const navigate = useNavigate()
+export default function RoomPage({ roomId, roomUrl, onLeave }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [remoteCount, setRemoteCount] = useState(0)
@@ -17,6 +14,7 @@ export default function RoomPage() {
   const localVideoRef = useRef(null)
   const remoteContainerRef = useRef(null)
   const localTracksRef = useRef({ audio: null, video: null })
+  // Keep refs to attached remote audio elements so we can clean them up
   const remoteAudioEls = useRef([])
 
   useEffect(() => {
@@ -28,10 +26,9 @@ export default function RoomPage() {
       }
 
       try {
-        const tokenRes = await fetch(
-          `${API_URL}/api/livekit/token?room=${encodeURIComponent(roomId)}`,
-          { credentials: 'include' }
-        )
+        const tokenRes = await fetch(`${API_URL}/api/livekit/token?room=${encodeURIComponent(roomId)}`, {
+          credentials: 'include',
+        })
 
         if (!tokenRes.ok) {
           const err = await tokenRes.json().catch(() => ({}))
@@ -46,33 +43,42 @@ export default function RoomPage() {
         await room.connect(livekitUrl, token)
         roomRef.current = room
 
+        // ── Local tracks ─────────────────────────────────────────────────
         const videoTrack = await createLocalVideoTrack()
         const audioTrack = await createLocalAudioTrack()
         localTracksRef.current = { video: videoTrack, audio: audioTrack }
 
+        // Attach local video preview
         const localContainer = localVideoRef.current
         localContainer.innerHTML = ''
-        const localEl = videoTrack.attach()
-        localEl.style.width = '100%'
-        localEl.style.height = '100%'
-        localEl.style.objectFit = 'cover'
-        localContainer.appendChild(localEl)
+        const el = videoTrack.attach()
+        el.style.width = '100%'
+        el.style.height = '100%'
+        el.style.objectFit = 'cover'
+        localContainer.appendChild(el)
 
+        // Publish both tracks to the room
         await room.localParticipant.publishTrack(videoTrack)
         await room.localParticipant.publishTrack(audioTrack)
 
+        // ── Remote track handler ──────────────────────────────────────────
         const handleTrack = (track) => {
           if (track.kind === 'video') {
+            // Attach remote video into the peer container
             const videoEl = track.attach()
             videoEl.style.width = '100%'
             videoEl.style.height = '100%'
             videoEl.style.objectFit = 'cover'
             if (remoteContainerRef.current) {
-              remoteContainerRef.current.innerHTML = ''
+              // Clear any old video element
+              const old = remoteContainerRef.current.querySelector('video')
+              if (old) old.remove()
               remoteContainerRef.current.appendChild(videoEl)
             }
             setRemoteCount(1)
           } else if (track.kind === 'audio') {
+            // Audio elements must be appended to the DOM so the browser
+            // actually plays them. We keep a ref so we can clean up on leave.
             const audioEl = track.attach()
             audioEl.style.display = 'none'
             document.body.appendChild(audioEl)
@@ -80,27 +86,34 @@ export default function RoomPage() {
           }
         }
 
+        // Participants already in the room when we join
         room.remoteParticipants.forEach((participant) => {
           participant.trackPublications.forEach((publication) => {
             if (publication.track) handleTrack(publication.track)
           })
         })
 
+        // New tracks from participants who join later
         room.on('trackSubscribed', (track) => {
           handleTrack(track)
         })
 
+        // Clean up when a remote track is removed
         room.on('trackUnsubscribed', (track) => {
           track.detach().forEach((el) => el.remove())
-          if (track.kind === 'video' && remoteContainerRef.current) {
-            remoteContainerRef.current.innerHTML = ''
+          if (track.kind === 'video') {
+            if (remoteContainerRef.current) {
+              remoteContainerRef.current.innerHTML = ''
+            }
           }
         })
 
+        // Participant leaves
         room.on('participantDisconnected', () => {
           if (remoteContainerRef.current) {
             remoteContainerRef.current.innerHTML = ''
           }
+          // Remove all remote audio elements
           remoteAudioEls.current.forEach((el) => el.remove())
           remoteAudioEls.current = []
           setRemoteCount(0)
@@ -117,6 +130,7 @@ export default function RoomPage() {
     setup()
 
     return () => {
+      // Cleanup on unmount
       try {
         if (localTracksRef.current.video) {
           localTracksRef.current.video.stop()
@@ -136,6 +150,7 @@ export default function RoomPage() {
     }
   }, [roomId])
 
+  // ── Mic toggle ────────────────────────────────────────────────────────────
   const toggleMic = async () => {
     const audioTrack = localTracksRef.current.audio
     if (!audioTrack) return
@@ -147,6 +162,7 @@ export default function RoomPage() {
     setMicMuted((prev) => !prev)
   }
 
+  // ── Camera toggle ─────────────────────────────────────────────────────────
   const toggleCam = async () => {
     const videoTrack = localTracksRef.current.video
     if (!videoTrack) return
@@ -159,25 +175,26 @@ export default function RoomPage() {
   }
 
   return (
-    <div className="min-h-screen bg-blue-50 dark:bg-gray-900 px-6 py-10 transition-colors">
+    <div className="min-h-screen bg-blue-50 px-6 py-10">
       <div className="max-w-7xl mx-auto space-y-8">
-        <div className="rounded-3xl bg-white dark:bg-gray-800 p-8 shadow-xl">
+        <div className="rounded-3xl bg-white p-8 shadow-xl">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white">LiveKit Mock Interview</h2>
-              <p className="text-gray-600 dark:text-gray-300">Live audio and video with your peer in this room.</p>
+              <h2 className="text-3xl font-bold text-gray-900">LiveKit Mock Interview</h2>
+              <p className="text-gray-600">Live audio and video with your peer in this room.</p>
             </div>
             <button
               type="button"
-              onClick={() => navigate('/')}
-              className="inline-flex items-center justify-center rounded-full border border-slate-300 dark:border-gray-600 px-6 py-3 text-slate-700 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-gray-700 transition"
+              onClick={onLeave}
+              className="inline-flex items-center justify-center rounded-full border border-slate-300 px-6 py-3 text-slate-700 hover:bg-slate-50 transition"
             >
               Leave Room
             </button>
           </div>
-          <div className="mt-6 rounded-2xl border border-blue-100 dark:border-gray-700 bg-blue-50 dark:bg-gray-700 p-4">
+
+          <div className="mt-6 rounded-2xl border border-blue-100 bg-blue-50 p-4">
             <p className="text-sm uppercase tracking-wide text-blue-700 mb-2">Room ID</p>
-            <p className="break-all text-blue-900 dark:text-blue-200">{roomId}</p>
+            <p className="break-all text-blue-900">{roomId}</p>
           </div>
         </div>
 
@@ -185,10 +202,10 @@ export default function RoomPage() {
           <div className="rounded-3xl bg-white p-6 shadow-xl">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Live Video</h3>
-                <p className="text-gray-600 dark:text-gray-300">Connected to room: {roomId}</p>
+                <h3 className="text-xl font-semibold text-gray-900">Live Video</h3>
+                <p className="text-gray-600">Connected to room: {roomId}</p>
               </div>
-              <div className="text-sm text-gray-500 dark:text-gray-400">
+              <div className="text-sm text-gray-500">
                 {remoteCount === 0 ? 'Waiting for peer to join...' : '🟢 Peer connected'}
               </div>
             </div>
@@ -204,6 +221,7 @@ export default function RoomPage() {
               </div>
             </div>
 
+            {/* ── Controls ── */}
             <div className="mt-5 flex gap-3 justify-center">
               <button
                 type="button"
@@ -239,12 +257,12 @@ export default function RoomPage() {
             )}
           </div>
 
-          <div className="rounded-3xl bg-white dark:bg-gray-800 p-6 shadow-xl">
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">Session info</h3>
-            <p className="text-gray-600 dark:text-gray-300 mb-4">
-              Copy and share this room ID with your peer if they are not already in the room.
+          <div className="rounded-3xl bg-white p-6 shadow-xl">
+            <h3 className="text-xl font-semibold text-gray-900 mb-3">Session info</h3>
+            <p className="text-gray-600 mb-4">
+              Copy and share this room ID with your peer if they aren't already in the room.
             </p>
-            <div className="rounded-2xl border border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-700 dark:text-gray-100 p-4 mb-4 break-all">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 mb-4 break-all">
               {roomId}
             </div>
             <button

@@ -10,8 +10,8 @@ const { AccessToken } = require("livekit-server-sdk");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
-const allowedOrigins = [FRONTEND_URL, "http://localhost:5173"];
+const FRONTEND_URL = process.env.FRONTEND_URL || "https://8zsgjjtr-5173.inc1.devtunnels.ms";
+const allowedOrigins = [FRONTEND_URL, "https://8zsgjjtr-5173.inc1.devtunnels.ms"];
 
 app.use(
   cors({

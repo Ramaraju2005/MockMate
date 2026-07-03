@@ -1,5 +1,6 @@
 import Editor from '@monaco-editor/react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { ThemeContext } from '../context/ThemeContext'
 
 const languageOptions = [
   { label: 'Python', value: 'python' },
@@ -18,6 +19,7 @@ const defaultCodeByLanguage = {
 }
 
 export default function CodingInterviewRun({ questions, timerMinutes, onComplete, onBack }) {
+  const { theme } = useContext(ThemeContext)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [language, setLanguage] = useState('python')
   const [editableCode, setEditableCode] = useState(defaultCodeByLanguage.python)
@@ -45,9 +47,9 @@ export default function CodingInterviewRun({ questions, timerMinutes, onComplete
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
     const recognition = new SpeechRecognition()
     recognition.lang = "en-US";
-recognition.continuous = true;
-recognition.interimResults = false;
-recognition.maxAlternatives = 1;
+    recognition.continuous = true;
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
 
     recognition.onresult = (event) => {
       const transcriptText = Array.from(event.results)
@@ -60,17 +62,17 @@ recognition.maxAlternatives = 1;
       )
     }
 
-   recognition.onstart = () => {
-  setIsListening(true);
-};
+    recognition.onstart = () => {
+      setIsListening(true);
+    };
 
     recognition.onend = () => {
-  setIsListening(false);
+      setIsListening(false);
 
-  if (recognitionRef.current?.shouldRestart) {
-    recognition.start();
-  }
-};
+      if (recognitionRef.current?.shouldRestart) {
+        recognition.start();
+      }
+    };
 
     recognition.onerror = () => {
       setError('Speech recognition failed. Please try again.')
@@ -100,8 +102,10 @@ recognition.maxAlternatives = 1;
     const loadTemplate = async () => {
       if (!currentQuestion) return
       setLoadingTemplate(true)
-      recognitionRef.current = recognition;
-recognitionRef.current.shouldRestart = false;
+      recognitionRef.current = recognitionRef.current || null
+      if (recognitionRef.current) {
+        recognitionRef.current.shouldRestart = false;
+      }
       try {
         const response = await fetch('/api/coding/template', {
           method: 'POST',
@@ -167,18 +171,19 @@ recognitionRef.current.shouldRestart = false;
     const currentResults = persistCurrentAnswer()
     onComplete(buildPayload(currentResults))
   }
-const toggleListening = () => {
-  if (!recognitionRef.current) return;
 
-  if (isListening) {
-    recognitionRef.current.shouldRestart = false;
-    recognitionRef.current.stop();
-    return;
-  }
+  const toggleListening = () => {
+    if (!recognitionRef.current) return;
 
-  recognitionRef.current.shouldRestart = true;
-  recognitionRef.current.start();
-};
+    if (isListening) {
+      recognitionRef.current.shouldRestart = false;
+      recognitionRef.current.stop();
+      return;
+    }
+
+    recognitionRef.current.shouldRestart = true;
+    recognitionRef.current.start();
+  };
 
   const runCode = async () => {
     setIsRunning(true)
@@ -239,94 +244,94 @@ const toggleListening = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 px-6 py-10">
-      <div className="mx-auto max-w-7xl rounded-3xl bg-white p-8 shadow-xl">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 px-6 py-10 transition-colors">
+      <div className="mx-auto max-w-7xl rounded-3xl bg-white dark:bg-slate-900 p-8 shadow-xl border border-slate-100 dark:border-slate-800 transition-colors">
         <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="text-3xl font-bold text-slate-900">Coding Interview</h2>
-            <p className="text-slate-600">Solve each prompt, run the code, and explain your approach aloud.</p>
+            <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Coding Interview</h2>
+            <p className="text-slate-600 dark:text-slate-400">Solve each prompt, run the code, and explain your approach aloud.</p>
           </div>
-          <div className="rounded-full bg-blue-100 px-4 py-2 text-sm font-semibold text-blue-700">
+          <div className="rounded-full bg-blue-100 dark:bg-blue-900/30 px-4 py-2 text-sm font-semibold text-blue-700 dark:text-blue-300">
             Time Left: {formatTime(timeLeft)}
           </div>
         </div>
 
-        <div className="mb-6 h-2 rounded-full bg-slate-200">
+        <div className="mb-6 h-2 rounded-full bg-slate-200 dark:bg-slate-800">
           <div className="h-2 rounded-full bg-blue-600 transition-all" style={{ width: `${progress}%` }} />
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
           <div className="space-y-6">
-            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
-              <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-blue-700">Question {currentIndex + 1} of {questions.length}</p>
-              <h3 className="text-xl font-semibold text-slate-900">{currentQuestion?.title || currentQuestion?.problemTitle || currentQuestion?.prompt || 'Loading question...'}</h3>
-              <p className="mt-3 whitespace-pre-wrap text-sm text-slate-700">{currentQuestion?.problemStatement || currentQuestion?.prompt || 'Problem statement will appear here.'}</p>
-              {currentQuestion?.constraints && <p className="mt-3 text-sm text-slate-700"><span className="font-semibold">Constraints:</span> {currentQuestion.constraints}</p>}
-              {currentQuestion?.examples && <p className="mt-3 text-sm text-slate-700"><span className="font-semibold">Examples:</span> {currentQuestion.examples}</p>}
-              <div className="mt-4 flex flex-wrap gap-3 text-sm text-slate-600">
-                <span className="rounded-full bg-white px-3 py-1">Topic: {currentQuestion?.topic || 'N/A'}</span>
-                <span className="rounded-full bg-white px-3 py-1">Difficulty: {currentQuestion?.difficulty || 'N/A'}</span>
-                <span className="rounded-full bg-white px-3 py-1">Function: {currentQuestion?.functionName || 'solution'}</span>
+            <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40 p-6">
+              <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-400">Question {currentIndex + 1} of {questions.length}</p>
+              <h3 className="text-xl font-semibold text-slate-900 dark:text-white">{currentQuestion?.title || currentQuestion?.problemTitle || currentQuestion?.prompt || 'Loading question...'}</h3>
+              <p className="mt-3 whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-350">{currentQuestion?.problemStatement || currentQuestion?.prompt || 'Problem statement will appear here.'}</p>
+              {currentQuestion?.constraints && <p className="mt-3 text-sm text-slate-700 dark:text-slate-300"><span className="font-semibold">Constraints:</span> {currentQuestion.constraints}</p>}
+              {currentQuestion?.examples && <p className="mt-3 text-sm text-slate-700 dark:text-slate-300"><span className="font-semibold">Examples:</span> {currentQuestion.examples}</p>}
+              <div className="mt-4 flex flex-wrap gap-3 text-sm text-slate-600 dark:text-slate-400">
+                <span className="rounded-full bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 px-3 py-1">Topic: {currentQuestion?.topic || 'N/A'}</span>
+                <span className="rounded-full bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 px-3 py-1">Difficulty: {currentQuestion?.difficulty || 'N/A'}</span>
+                <span className="rounded-full bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 px-3 py-1">Function: {currentQuestion?.functionName || 'solution'}</span>
               </div>
             </div>
 
-            <div className="rounded-3xl border border-slate-200 bg-white p-6">
+            <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-6">
               <div className="mb-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
-                  <p className="text-lg font-semibold text-slate-900">Editable Section</p>
-                  <p className="text-sm text-slate-600">Implement only the required function.</p>
+                  <p className="text-lg font-semibold text-slate-900 dark:text-white">Editable Section</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">Implement only the required function.</p>
                 </div>
-                <select value={language} onChange={(e) => setLanguage(e.target.value)} className="rounded-2xl border border-slate-200 px-3 py-2 text-sm">
+                <select value={language} onChange={(e) => setLanguage(e.target.value)} className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-3 py-2 text-sm focus:outline-none">
                   {languageOptions.map((option) => (
                     <option key={option.value} value={option.value}>{option.label}</option>
                   ))}
                 </select>
               </div>
-              <div className="overflow-hidden rounded-2xl border border-slate-200">
+              <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-750">
                 <Editor
                   height="320px"
                   language={language === 'cpp' ? 'cpp' : language === 'javascript' ? 'javascript' : language}
-                  theme="vs-dark"
+                  theme={theme === 'dark' ? 'vs-dark' : 'light'}
                   value={editableCode}
                   onChange={(value) => setEditableCode(value || '')}
                   options={{ minimap: { enabled: false }, fontSize: 14, automaticLayout: true }}
                 />
               </div>
 
-              <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <p className="mb-2 text-sm font-semibold text-slate-700">Read-Only Section</p>
-                <pre className="whitespace-pre-wrap text-sm text-slate-700">{readOnlyCode || 'Driver code will be generated here.'}</pre>
+              <div className="mt-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 p-4">
+                <p className="mb-2 text-sm font-semibold text-slate-700 dark:text-slate-350">Read-Only Section</p>
+                <pre className="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-400">{readOnlyCode || 'Driver code will be generated here.'}</pre>
               </div>
             </div>
           </div>
 
           <div className="space-y-6">
-            <div className="rounded-3xl border border-slate-200 bg-white p-6">
+            <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-6">
               <div className="mb-4 flex items-center justify-between">
-                <p className="text-lg font-semibold text-slate-900">Notes / Scratch Pad</p>
-                <button type="button" onClick={toggleListening} className={`rounded-full px-4 py-2 text-sm font-medium transition ${isListening ? 'bg-red-600 text-white' : 'bg-slate-900 text-white'}`}>
+                <p className="text-lg font-semibold text-slate-900 dark:text-white">Notes / Scratch Pad</p>
+                <button type="button" onClick={toggleListening} className={`rounded-full px-4 py-2 text-sm font-medium transition ${isListening ? 'bg-red-600 text-white' : 'bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white'}`}>
                   {isListening ? 'Stop Mic' : 'Start Mic'}
                 </button>
               </div>
-              <textarea value={scratchPad} onChange={(e) => setScratchPad(e.target.value)} rows={5} className="w-full rounded-2xl border border-slate-200 px-4 py-3" placeholder="Write your approach, test ideas, or quick notes here..." />
-              <textarea value={transcript} onChange={(e) => setTranscript(e.target.value)} rows={6} className="mt-4 w-full rounded-2xl border border-slate-200 px-4 py-3" placeholder="Speak or type your explanation here..." />
-              {error && <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
+              <textarea value={scratchPad} onChange={(e) => setScratchPad(e.target.value)} rows={5} className="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Write your approach, test ideas, or quick notes here..." />
+              <textarea value={transcript} onChange={(e) => setTranscript(e.target.value)} rows={6} className="mt-4 w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Speak or type your explanation here..." />
+              {error && <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 dark:bg-red-950/30 p-3 text-sm text-red-700 dark:text-red-300">{error}</div>}
             </div>
 
-            <div className="rounded-3xl border border-slate-200 bg-white p-6">
+            <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-6">
               <div className="mb-3 flex items-center justify-between">
-                <p className="text-lg font-semibold text-slate-900">Execution</p>
+                <p className="text-lg font-semibold text-slate-900 dark:text-white">Execution</p>
                 <button type="button" onClick={runCode} disabled={isRunning} className="rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:opacity-60">
                   {isRunning ? 'Running...' : 'Run Code'}
                 </button>
               </div>
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+              <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40 p-4 text-sm text-slate-700 dark:text-slate-350">
                 <p className="mb-2 font-semibold">Sample Test Cases</p>
                 <p>{currentQuestion?.sampleInput || 'Sample input will be shown here.'}</p>
                 <p className="mt-3 font-semibold">Expected Output</p>
                 <p>{currentQuestion?.sampleOutput || 'Expected output will be shown here.'}</p>
               </div>
-              <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-950 p-4 font-mono text-sm text-slate-100">
+              <div className="mt-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-950 dark:bg-black p-4 font-mono text-sm text-slate-100">
                 <p className="mb-2 text-xs uppercase tracking-wide text-slate-400">Output</p>
                 <pre className="whitespace-pre-wrap">{executionResult || 'Run your code to see the output.'}</pre>
               </div>
@@ -338,7 +343,7 @@ const toggleListening = () => {
           <button type="button" onClick={saveAndAdvance} className="rounded-3xl bg-blue-600 px-6 py-3 text-white transition hover:bg-blue-700">
             {currentIndex < questions.length - 1 ? 'Next Question' : 'Submit Session'}
           </button>
-          <button type="button" onClick={finishSession} className="rounded-3xl border border-slate-300 px-6 py-3 text-slate-700 transition hover:bg-slate-50">
+          <button type="button" onClick={finishSession} className="rounded-3xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 transition hover:bg-slate-50 dark:hover:bg-slate-800">
             End Session
           </button>
         </div>

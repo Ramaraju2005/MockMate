@@ -85,6 +85,22 @@ function AppContent() {
               </ProtectedRoute>
             } 
           />
+          <Route
+            path="/interview"
+            element={
+              <ProtectedRoute>
+                <InterviewPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/coding-interview"
+            element={
+              <ProtectedRoute>
+                <CodingInterviewPage />
+              </ProtectedRoute>
+            }
+          />
           
           {/* Fallback route */}
           <Route path="*" element={<Navigate to="/" replace />} />
@@ -100,60 +116,6 @@ function App() {
       <AuthProvider>
         <Router>
           <AppContent />
-          <div className="flex flex-col min-h-screen">
-            <Navbar />
-            <div className="flex-1 flex flex-col">
-              <Routes>
-                <Route path="/login" element={<LoginRoute />} />
-                
-                {/* Protected Routes */}
-                <Route 
-                  path="/" 
-                  element={
-                    <ProtectedRoute>
-                      <Dashboard />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/room-selection" 
-                  element={
-                    <ProtectedRoute>
-                      <RoomSelectionPage />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/room/:roomId" 
-                  element={
-                    <ProtectedRoute>
-                      <RoomPage />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route
-                  path="/interview"
-                  element={
-                    <ProtectedRoute>
-                      <InterviewPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/coding-interview"
-                  element={
-                    <ProtectedRoute>
-                      <CodingInterviewPage />
-                    </ProtectedRoute>
-                  }
-                />
-                
-                {/* Fallback route */}
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </div>
-
-          </div>
         </Router>
       </AuthProvider>
     </ThemeProvider>

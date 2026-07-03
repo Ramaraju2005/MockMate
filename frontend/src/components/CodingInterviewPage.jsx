@@ -83,7 +83,7 @@ export default function CodingInterviewPage() {
   const goHome = () => navigate('/')
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white transition-colors">
       {error && (
         <div className="mx-auto max-w-7xl px-6 pt-6 sm:px-8">
           <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">

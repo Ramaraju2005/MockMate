@@ -59,55 +59,55 @@ export default function CodingInterviewSetup({ onStart, onBack, loading }) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 px-6 py-10">
-      <div className="mx-auto max-w-5xl rounded-3xl bg-white p-8 shadow-xl">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 px-6 py-10 transition-colors">
+      <div className="mx-auto max-w-5xl rounded-3xl bg-white dark:bg-slate-900 p-8 shadow-xl border border-slate-100 dark:border-slate-800 transition-colors">
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="text-3xl font-bold text-slate-900">Coding Interview MVP</h2>
-            <p className="text-slate-600">Configure a coding session with AI-generated problems and live execution.</p>
+            <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Coding Interview MVP</h2>
+            <p className="text-slate-600 dark:text-slate-400">Configure a coding session with AI-generated problems and live execution.</p>
           </div>
           <button
             type="button"
             onClick={onBack}
-            className="rounded-full border border-slate-300 px-5 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+            className="rounded-full border border-slate-300 dark:border-slate-700 px-5 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 transition hover:bg-slate-50 dark:hover:bg-slate-800"
           >
             Back
           </button>
         </div>
 
-        <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
-          <label className="mb-4 flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4">
+        <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40 p-6">
+          <label className="mb-4 flex items-center gap-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 cursor-pointer">
             <input
               type="checkbox"
               checked={aiMode}
               onChange={() => setAiMode((value) => !value)}
-              className="h-4 w-4 rounded border-slate-300 text-blue-600"
+              className="h-4 w-4 rounded border-slate-300 dark:border-slate-750 text-blue-600 dark:bg-slate-800"
             />
             <div>
-              <p className="font-semibold text-slate-900">AI Mode</p>
-              <p className="text-sm text-slate-600">Let the assistant select topics automatically.</p>
+              <p className="font-semibold text-slate-900 dark:text-white">AI Mode</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Let the assistant select topics automatically.</p>
             </div>
           </label>
 
           <div className="grid gap-6 md:grid-cols-2">
             <label className="block">
-              <span className="mb-2 block text-sm font-semibold text-slate-700">Number of Questions</span>
+              <span className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">Number of Questions</span>
               <input
                 type="number"
                 min="1"
                 max="8"
                 value={questionCount}
                 onChange={(e) => setQuestionCount(e.target.value)}
-                className="w-full rounded-2xl border border-slate-200 px-4 py-3"
+                className="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </label>
 
             <label className="block">
-              <span className="mb-2 block text-sm font-semibold text-slate-700">Difficulty</span>
+              <span className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">Difficulty</span>
               <select
                 value={difficulty}
                 onChange={(e) => setDifficulty(e.target.value)}
-                className="w-full rounded-2xl border border-slate-200 px-4 py-3"
+                className="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 {difficulties.map((item) => (
                   <option key={item} value={item}>
@@ -118,20 +118,20 @@ export default function CodingInterviewSetup({ onStart, onBack, loading }) {
             </label>
 
             <label className="block">
-              <span className="mb-2 block text-sm font-semibold text-slate-700">Interview Timer (minutes)</span>
+              <span className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">Interview Timer (minutes)</span>
               <input
                 type="number"
                 min="5"
                 max="60"
                 value={timer}
                 onChange={(e) => setTimer(e.target.value)}
-                className="w-full rounded-2xl border border-slate-200 px-4 py-3"
+                className="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </label>
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-4">
-              <p className="mb-2 text-sm font-semibold text-slate-700">Selected Topics</p>
-              <p className="text-sm text-slate-600">{selectedTopicLabel}</p>
+            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+              <p className="mb-2 text-sm font-semibold text-slate-700 dark:text-slate-300">Selected Topics</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">{selectedTopicLabel}</p>
             </div>
           </div>
 
@@ -140,14 +140,14 @@ export default function CodingInterviewSetup({ onStart, onBack, loading }) {
               {topicOptions.map((topic) => {
                 const checked = topics.includes(topic)
                 return (
-                  <label key={topic} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3">
+                  <label key={topic} className="flex items-center gap-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={checked}
                       onChange={() => toggleTopic(topic)}
-                      className="h-4 w-4 rounded border-slate-300 text-blue-600"
+                      className="h-4 w-4 rounded border-slate-300 dark:border-slate-750 text-blue-600 dark:bg-slate-800"
                     />
-                    <span className="text-sm font-medium text-slate-700">{topic}</span>
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{topic}</span>
                   </label>
                 )
               })}
@@ -155,7 +155,7 @@ export default function CodingInterviewSetup({ onStart, onBack, loading }) {
           )}
         </div>
 
-        {error && <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>}
+        {error && <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 dark:bg-red-950/30 p-4 text-sm text-red-700 dark:text-red-300">{error}</div>}
 
         <button
           type="button"

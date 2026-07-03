@@ -10,6 +10,10 @@ const passport = require("./utils/passport");
 const { AccessToken } = require("livekit-server-sdk");
 const compileRoute = require("./routes/compile");
 const sessionRoute = require("./routes/session");
+const { generateQuestions, evaluateAnswers } = require('./utils/aiInterview');
+const { generateCodingQuestions, evaluateCodingSession } = require('./utils/codingInterview');
+const { executeCode } = require('./utils/judge0');
+const { buildLanguageTemplate } = require('./utils/languageTemplates');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -58,6 +62,11 @@ function isLoggedIn(req, res, next) {
   return res.status(401).json({ message: "Not authenticated" });
 }
 
+function normalizeCodingLanguage(language) {
+  const supportedLanguages = new Set(['python', 'javascript', 'java', 'cpp', 'c']);
+  return supportedLanguages.has(language) ? language : 'python';
+}
+
 app.get("/api/auth/me", isLoggedIn, (req, res) => {
   res.json({
     user: {
@@ -81,6 +90,93 @@ app.post('/api/room', isLoggedIn, (req, res) => {
   });
 
   res.json({ roomId, roomUrl });
+});
+
+app.post('/api/interview/generate', isLoggedIn, async (req, res) => {
+  try {
+    const questions = await generateQuestions(req.body || {});
+    res.json({ questions });
+  } catch (error) {
+    console.error('Interview question generation failed:', error);
+    res.status(500).json({
+      error: error.message || 'Failed to generate interview questions',
+    });
+  }
+});
+
+app.post('/api/interview/evaluate', isLoggedIn, async (req, res) => {
+  try {
+    const { questions = [], answers = [] } = req.body || {};
+    const report = await evaluateAnswers({ questions, answers });
+
+    res.json({ report });
+  } catch (error) {
+    console.error('Interview evaluation failed:', error);
+    res.status(500).json({
+      error: error.message || 'Failed to evaluate interview answers',
+    });
+  }
+});
+
+app.post('/api/coding/generate', isLoggedIn, async (req, res) => {
+  try {
+    const questions = await generateCodingQuestions(req.body || {});
+    res.json({ questions });
+  } catch (error) {
+    console.error('Coding question generation failed:', error);
+    res.status(500).json({
+      error: error.message || 'Failed to generate coding interview questions',
+    });
+  }
+});
+
+app.post('/api/coding/template', isLoggedIn, (req, res) => {
+  try {
+    const { question = {}, language } = req.body || {};
+    const normalizedLanguage = normalizeCodingLanguage(language);
+    const template = buildLanguageTemplate(question, normalizedLanguage);
+
+    res.json(template);
+  } catch (error) {
+    console.error('Coding template generation failed:', error);
+    res.status(500).json({
+      error: error.message || 'Failed to build coding template',
+    });
+  }
+});
+
+app.post('/api/coding/execute', isLoggedIn, async (req, res) => {
+  try {
+    const { language, editableCode, readOnlyCode } = req.body || {};
+    const normalizedLanguage = normalizeCodingLanguage(language);
+    const fullCode = [editableCode || '', readOnlyCode || ''].join('\n');
+    const execution = await executeCode({
+      language: normalizedLanguage,
+      code: fullCode,
+      input: '',
+    });
+
+    res.json(execution);
+  } catch (error) {
+    console.error('Coding execution failed:', error);
+    res.status(500).json({
+      error: error.message || 'Failed to execute coding submission',
+    });
+  }
+});
+
+app.post('/api/coding/evaluate', isLoggedIn, async (req, res) => {
+  try {
+    const { questions = [], sessionResults = [] } = req.body || {};
+    const report = await evaluateCodingSession({ questions, sessionResults });
+
+    res.json({ report });
+  } catch (error) {
+    console.error('Coding evaluation failed:', error);
+    res.status(500).json({
+      error: error.message || 'Failed to evaluate coding interview',
+    });
+  }
 });
 
 
@@ -125,6 +221,7 @@ app.get("/api/livekit/token", isLoggedIn, async (req, res) => {
     );
 
     token.addGrant({
+
       roomJoin: true,
       room: roomName,
       canPublish: true,

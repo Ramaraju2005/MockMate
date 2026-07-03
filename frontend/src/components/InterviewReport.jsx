@@ -1,0 +1,57 @@
+export default function InterviewReport({ report, onRestart }) {
+  return (
+    <div className="min-h-screen bg-blue-50 px-6 py-10">
+      <div className="mx-auto max-w-6xl rounded-3xl bg-white p-8 shadow-xl">
+        <div className="mb-8 flex items-center justify-between gap-4">
+          <div>
+            <h2 className="text-3xl font-bold text-gray-900">Interview Report</h2>
+            <p className="text-gray-600">AI-generated feedback for each answer.</p>
+          </div>
+          <button type="button" onClick={onRestart} className="rounded-full bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700 transition">
+            Start New Interview
+          </button>
+        </div>
+
+        <div className="space-y-6">
+          {report.map((item, index) => (
+            <div key={`${item.question}-${index}`} className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <h3 className="text-lg font-semibold text-gray-900">{index + 1}. {item.question}</h3>
+                <div className="rounded-full bg-blue-100 px-3 py-1 text-sm font-semibold text-blue-700">
+                  Score: {item.overallScore ?? item.score ?? 'N/A'}/100
+                </div>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <p className="mb-2 text-sm font-semibold text-slate-700">Student Answer</p>
+                  <p className="rounded-2xl bg-white p-3 text-sm text-slate-700">{item.studentAnswer || 'No answer recorded.'}</p>
+                </div>
+                <div>
+                  <p className="mb-2 text-sm font-semibold text-slate-700">Ideal Answer</p>
+                  <p className="rounded-2xl bg-white p-3 text-sm text-slate-700">{item.idealAnswer || 'Not available.'}</p>
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <div>
+                  <p className="mb-2 text-sm font-semibold text-slate-700">Accuracy Score</p>
+                  <p className="rounded-2xl bg-white p-3 text-sm text-slate-700">{item.accuracyScore ?? 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="mb-2 text-sm font-semibold text-slate-700">Communication Score</p>
+                  <p className="rounded-2xl bg-white p-3 text-sm text-slate-700">{item.communicationScore ?? 'N/A'}</p>
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <p className="mb-2 text-sm font-semibold text-slate-700">Improvement Suggestion</p>
+                <p className="rounded-2xl bg-white p-3 text-sm text-slate-700">{item.improvementSuggestion || 'Keep practicing.'}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}

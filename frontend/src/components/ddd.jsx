@@ -12,15 +12,6 @@ import Footer from "./Footer.jsx";
 
 const features = [
   {
-    icon: Video,
-    title: "Peer Interview Room",
-    description:
-      "Go straight into the room flow to create or join a live peer video interview.",
-    accent: "from-sky-500 to-blue-600",
-    action: "/room-selection",
-    actionLabel: "Open Video Call",
-  },
-  {
     icon: MessageSquareText,
     title: "AI Mock Interview",
     description:
@@ -28,6 +19,15 @@ const features = [
     accent: "from-emerald-500 to-teal-600",
     action: "/interview",
     actionLabel: "Start AI Mock Interview",
+  },
+  {
+    icon: Video,
+    title: "Peer Interview Room",
+    description:
+      "Go straight into the room flow to create or join a live peer video interview.",
+    accent: "from-sky-500 to-blue-600",
+    action: "/room-selection",
+    actionLabel: "Open Video Call",
   },
   {
     icon: Bot,

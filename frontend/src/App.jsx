@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
@@ -48,11 +48,58 @@ const LoginRoute = () => {
   return <LoginPage />;
 };
 
+function AppContent() {
+  const location = useLocation();
+
+  const hideNavbar = location.pathname.startsWith('/room/');
+
+  return (
+    <div className="flex flex-col min-h-screen">
+      {!hideNavbar && <Navbar />}
+      <div className="flex-1 flex flex-col">
+        <Routes>
+          <Route path="/login" element={<LoginRoute />} />
+          
+          {/* Protected Routes */}
+          <Route 
+            path="/" 
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/room-selection" 
+            element={
+              <ProtectedRoute>
+                <RoomSelectionPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/room/:roomId" 
+            element={
+              <ProtectedRoute>
+                <RoomPage />
+              </ProtectedRoute>
+            } 
+          />
+          
+          {/* Fallback route */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
         <Router>
+          <AppContent />
           <div className="flex flex-col min-h-screen">
             <Navbar />
             <div className="flex-1 flex flex-col">

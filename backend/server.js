@@ -3,10 +3,13 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
+
 require('dotenv').config();
 const session = require("express-session");
 const passport = require("./utils/passport");
 const { AccessToken } = require("livekit-server-sdk");
+const compileRoute = require("./routes/compile");
+const sessionRoute = require("./routes/session");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -43,6 +46,9 @@ app.use(
 
 app.use(passport.initialize());
 app.use(passport.session());
+
+app.use("/api/compile", compileRoute);
+app.use("/api/session", sessionRoute);
 
 function isLoggedIn(req, res, next) {
   if (req.isAuthenticated()) {
@@ -142,31 +148,19 @@ app.get("/api/livekit/token", isLoggedIn, async (req, res) => {
 });
 
 // MongoDB Connection
-const { MongoClient, ServerApiVersion } = require('mongodb');
-const uri = process.env.MONGODB_URI;
+const mongoUri = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/mock-interview";
 
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
-const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  }
-});
-
-async function run() {
-  try {
-    // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
-    // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
-  } finally {
-    // Ensures that the client will close when you finish/error
-    await client.close();
-  }
-}
-run().catch(console.dir);
+mongoose
+  .connect(mongoUri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => {
+    console.log("Connected to MongoDB");
+  })
+  .catch((err) => {
+    console.error("MongoDB connection error:", err);
+  });
 
 
 
@@ -236,6 +230,139 @@ app.get("/logout", (req, res) => {
   });
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server is running on port ${PORT}`);
+const http = require("http");
+const { Server } = require("socket.io");
+
+const server = http.createServer(app);
+
+const defaultRoomState = {
+  code: `public class Main {
+  public static void main(String[] args) {
+    System.out.println("Hello MockMate");
+  }
+}`,
+  language: "java",
+  notes: "",
+  timerStart: null,
+  consoleOutput: "",
+};
+
+const roomStates = new Map();
+const roomUsers = new Map();
+
+const io = new Server(server, {
+  cors: {
+    origin: allowedOrigins,
+    credentials: true,
+  },
+});
+io.on("connection", (socket) => {
+  console.log("User Connected:", socket.id);
+
+  socket.on("join-room", (payload) => {
+    const roomId = typeof payload === "string" ? payload : payload?.roomId;
+    const userName = typeof payload === "object" ? payload?.userName || "Guest" : "Guest";
+
+    if (!roomId) return;
+
+    if (!roomStates.has(roomId)) {
+      roomStates.set(roomId, { ...defaultRoomState });
+    }
+
+    if (!roomUsers.has(roomId)) {
+      roomUsers.set(roomId, {});
+    }
+
+    const roomState = roomStates.get(roomId);
+    const roomUserMap = roomUsers.get(roomId);
+    roomUserMap[socket.id] = userName;
+
+    socket.join(roomId);
+    console.log(socket.id, "joined", roomId, "as", userName);
+
+    const usersInRoom = Object.values(roomUserMap);
+
+    io.to(roomId).emit(
+      "participants",
+      io.sockets.adapter.rooms.get(roomId)?.size || 1
+    );
+    io.to(roomId).emit("room-users", usersInRoom);
+
+    socket.emit("code-update", roomState.code);
+    socket.emit("language-update", roomState.language);
+    socket.emit("notes-update", roomState.notes);
+    socket.emit("console-output", roomState.consoleOutput);
+
+    if (roomState.timerStart) {
+      socket.emit("timer-start", roomState.timerStart);
+    }
+  });
+
+  socket.on("start-timer", (roomId) => {
+    if (!roomStates.has(roomId)) {
+      roomStates.set(roomId, { ...defaultRoomState });
+    }
+
+    const roomState = roomStates.get(roomId);
+    if (!roomState.timerStart) {
+      roomState.timerStart = Date.now();
+    }
+
+    io.to(roomId).emit("timer-start", roomState.timerStart);
+  });
+
+  socket.on("code-change", ({ roomId, code }) => {
+    if (!roomStates.has(roomId)) {
+      roomStates.set(roomId, { ...defaultRoomState });
+    }
+    roomStates.get(roomId).code = code;
+    socket.to(roomId).emit("code-update", code);
+  });
+
+  socket.on("language-change", ({ roomId, language }) => {
+    if (!roomStates.has(roomId)) {
+      roomStates.set(roomId, { ...defaultRoomState });
+    }
+    roomStates.get(roomId).language = language;
+    socket.to(roomId).emit("language-update", language);
+  });
+
+  socket.on("notes-change", ({ roomId, notes }) => {
+    if (!roomStates.has(roomId)) {
+      roomStates.set(roomId, { ...defaultRoomState });
+    }
+    roomStates.get(roomId).notes = notes;
+    socket.to(roomId).emit("notes-update", notes);
+  });
+
+  socket.on("console-output", ({ roomId, output }) => {
+    if (!roomStates.has(roomId)) {
+      roomStates.set(roomId, { ...defaultRoomState });
+    }
+    roomStates.get(roomId).consoleOutput = output;
+    socket.to(roomId).emit("console-output", output);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("Disconnected:", socket.id);
+
+    socket.rooms.forEach((roomId) => {
+      if (roomId === socket.id) return;
+      const room = io.sockets.adapter.rooms.get(roomId);
+      const roomUserMap = roomUsers.get(roomId);
+      if (roomUserMap) {
+        delete roomUserMap[socket.id];
+        io.to(roomId).emit("room-users", Object.values(roomUserMap));
+      }
+
+      if (!room || room.size === 0) {
+        roomStates.delete(roomId);
+        roomUsers.delete(roomId);
+      }
+    });
+  });
+});
+
+server.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running on ${PORT}`);
 });

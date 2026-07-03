@@ -44,24 +44,33 @@ export default function CodingInterviewRun({ questions, timerMinutes, onComplete
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
     const recognition = new SpeechRecognition()
-    recognition.lang = 'en-US'
-    recognition.continuous = true
-    recognition.interimResults = true
+    recognition.lang = "en-US";
+recognition.continuous = true;
+recognition.interimResults = false;
+recognition.maxAlternatives = 1;
 
     recognition.onresult = (event) => {
-      let interim = ''
-      let finalText = ''
-      for (let i = event.resultIndex; i < event.results.length; i += 1) {
-        const result = event.results[i]
-        const text = result[0].transcript
-        if (result.isFinal) {
-          finalText += `${text} `
-        } else {
-          interim += text
-        }
-      }
-      setTranscript((prev) => `${prev}${finalText}${interim}`.trim())
+      const transcriptText = Array.from(event.results)
+        .map((result) => result[0].transcript)
+        .join(' ')
+        .trim()
+
+      setTranscript((prev) =>
+        prev && transcriptText ? `${transcriptText}` : transcriptText
+      )
     }
+
+   recognition.onstart = () => {
+  setIsListening(true);
+};
+
+    recognition.onend = () => {
+  setIsListening(false);
+
+  if (recognitionRef.current?.shouldRestart) {
+    recognition.start();
+  }
+};
 
     recognition.onerror = () => {
       setError('Speech recognition failed. Please try again.')
@@ -91,6 +100,8 @@ export default function CodingInterviewRun({ questions, timerMinutes, onComplete
     const loadTemplate = async () => {
       if (!currentQuestion) return
       setLoadingTemplate(true)
+      recognitionRef.current = recognition;
+recognitionRef.current.shouldRestart = false;
       try {
         const response = await fetch('/api/coding/template', {
           method: 'POST',
@@ -156,18 +167,18 @@ export default function CodingInterviewRun({ questions, timerMinutes, onComplete
     const currentResults = persistCurrentAnswer()
     onComplete(buildPayload(currentResults))
   }
+const toggleListening = () => {
+  if (!recognitionRef.current) return;
 
-  const toggleListening = () => {
-    if (!recognitionRef.current) return
-    if (isListening) {
-      recognitionRef.current.stop()
-      setIsListening(false)
-      return
-    }
-    setTranscript('')
-    recognitionRef.current.start()
-    setIsListening(true)
+  if (isListening) {
+    recognitionRef.current.shouldRestart = false;
+    recognitionRef.current.stop();
+    return;
   }
+
+  recognitionRef.current.shouldRestart = true;
+  recognitionRef.current.start();
+};
 
   const runCode = async () => {
     setIsRunning(true)
@@ -205,6 +216,10 @@ export default function CodingInterviewRun({ questions, timerMinutes, onComplete
   }
 
   const saveAndAdvance = () => {
+    if (isListening && recognitionRef.current) {
+      recognitionRef.current.stop()
+    }
+
     const currentResults = persistCurrentAnswer()
 
     if (currentIndex < questions.length - 1) {

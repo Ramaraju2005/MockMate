@@ -21,8 +21,8 @@ router.post("/save", isLoggedIn, async (req, res) => {
       code,
     } = req.body;
 
-    if (!roomId || !interviewDate || durationSeconds == null || !code) {
-      return res.status(400).json({ error: "Missing required fields" });
+    if (!roomId || !interviewDate) {
+      return res.status(400).json({ error: "Missing required fields: roomId and interviewDate" });
     }
 
     const session = new Session({

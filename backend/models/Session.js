@@ -21,15 +21,15 @@ const sessionSchema = new mongoose.Schema(
     },
     durationSeconds: {
       type: Number,
-      required: true,
+      default: 0,
     },
     editorText: {
       type: String,
-      required: true,
+      default: "",
     },
     code: {
       type: String,
-      required: true,
+      default: "",
     },
   },
   {

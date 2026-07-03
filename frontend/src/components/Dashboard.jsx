@@ -65,10 +65,18 @@ export default function Dashboard() {
                 Video Interview with Peer
               </h3>
 
-              <p className="text-gray-600 dark:text-gray-300">
+              <p className="text-gray-600 dark:text-gray-300 mb-6">
                 Join live video interviews with friends or peers to improve
                 communication, confidence and coding skills.
               </p>
+
+              <button
+                onClick={() => navigate("/room-selection")}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition flex items-center justify-center gap-2"
+              >
+                Start Room Selection
+                <ArrowRight size={18} />
+              </button>
 
             </div>
 

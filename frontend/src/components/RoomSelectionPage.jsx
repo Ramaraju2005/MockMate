@@ -1,14 +1,26 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  Video,
-  PlusCircle,
-  Users,
-  ArrowLeft,
-  Sparkles,
-} from "lucide-react";
+import { ArrowLeft, ChevronRight, Clock3, PlusCircle, Sparkles, Users, Video } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
+
+const benefits = [
+  {
+    icon: Video,
+    title: "Live interview flow",
+    description: "Practice in a space built around peer-to-peer video and audio sessions.",
+  },
+  {
+    icon: Users,
+    title: "Partner friendly",
+    description: "Share a room ID quickly and jump into the same session without friction.",
+  },
+  {
+    icon: Sparkles,
+    title: "Polished practice",
+    description: "Keep the focus on communication, coding, and confidence instead of setup.",
+  },
+];
 
 export default function RoomSelectionPage() {
   const navigate = useNavigate();
@@ -31,7 +43,6 @@ export default function RoomSelectionPage() {
       }
 
       const data = await response.json();
-
       navigate(`/room/${data.roomId}`);
     } catch (err) {
       console.error(err);
@@ -55,205 +66,122 @@ export default function RoomSelectionPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors">
+    <div className="relative min-h-screen overflow-hidden bg-slate-950 text-white transition-colors">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.20),transparent_30%),radial-gradient(circle_at_top_right,rgba(168,85,247,0.18),transparent_26%),linear-gradient(135deg,#020617_0%,#111827_56%,#0f172a_100%)]" />
 
-      {/* Hero */}
+      <div className="relative mx-auto flex min-h-screen max-w-7xl flex-col px-6 py-8 sm:px-8 lg:py-10">
+        <button
+          onClick={() => navigate("/")}
+          className="inline-flex w-fit items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-slate-100 backdrop-blur transition hover:bg-white/10"
+        >
+          <ArrowLeft size={16} />
+          Back to dashboard
+        </button>
 
-      <section className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 text-white">
-
-        <div className="max-w-7xl mx-auto px-8 py-20">
-
-          <button
-            onClick={() => navigate('/')}
-            className="flex items-center gap-2 bg-white/20 px-5 py-2 rounded-lg hover:bg-white/30 transition"
-          >
-            <ArrowLeft size={18} />
-            Back
-          </button>
-
-          <div className="mt-12 text-center">
-
-            <h1 className="text-5xl font-bold">
-              Mock Interview Room
-            </h1>
-
-            <p className="mt-6 text-xl text-blue-100 max-w-3xl mx-auto">
-              Create a private interview room or join an existing one to
-              practice coding and communication with your interview partner.
-            </p>
-
-          </div>
-
-        </div>
-
-      </section>
-
-      {/* Cards */}
-
-      <section className="max-w-7xl mx-auto px-8 py-16">
-
-        <div className="grid lg:grid-cols-2 gap-10">
-
-          {/* Create */}
-
-          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-10 hover:shadow-2xl transition">
-
-            <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
-
-              <PlusCircle
-                className="text-blue-600"
-                size={34}
-              />
-
+        <section className="grid flex-1 items-center gap-10 py-10 lg:grid-cols-[1.05fr_0.95fr] lg:py-16">
+          <div className="space-y-8">
+            <div className="inline-flex items-center gap-2 rounded-full border border-sky-400/20 bg-sky-400/10 px-4 py-2 text-sm font-medium text-sky-200 backdrop-blur">
+              <Sparkles size={16} />
+              Peer interview rooms
             </div>
 
-            <h2 className="text-3xl font-bold mt-6">
-              Create Interview Room
-            </h2>
+            <div className="space-y-5">
+              <h1 className="max-w-2xl text-5xl font-bold tracking-tight text-white sm:text-6xl">
+                Create or join a room with a layout that keeps the interview focused.
+              </h1>
 
-            <p className="text-gray-600 mt-4 leading-7">
-              Generate a brand-new interview room instantly.
-              Share the room ID with your friend and start
-              your mock interview using live video and code
-              collaboration.
-            </p>
-
-            <button
-              onClick={createRoom}
-              disabled={loading}
-              className="mt-8 w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-semibold transition"
-            >
-              {loading ? "Creating Room..." : "Create Room"}
-            </button>
-
-          </div>
-
-          {/* Join */}
-
-          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-10 hover:shadow-2xl transition">
-
-            <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
-
-              <Users
-                className="text-green-600"
-                size={34}
-              />
-
-            </div>
-
-            <h2 className="text-3xl font-bold mt-6">
-              Join Existing Room
-            </h2>
-
-            <p className="text-gray-600 mt-4 leading-7">
-              Already have a Room ID?
-              Enter it below to join your friend's interview
-              room instantly.
-            </p>
-
-            <input
-              value={roomIdInput}
-              onChange={(e) => setRoomIdInput(e.target.value)}
-              placeholder="Enter Room ID"
-              className="mt-8 w-full border-2 border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl px-5 py-4 focus:outline-none focus:border-blue-500"
-            />
-
-            <button
-              onClick={joinRoom}
-              className="mt-6 w-full bg-gray-900 hover:bg-black text-white py-4 rounded-xl font-semibold transition"
-            >
-              Join Room
-            </button>
-
-          </div>
-
-        </div>
-
-        {/* Why MockMate */}
-
-        <div className="mt-20 bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-12">
-
-          <div className="flex items-center gap-4">
-
-            <Sparkles
-              className="text-purple-600"
-              size={35}
-            />
-
-            <h2 className="text-3xl font-bold dark:text-white">
-              Why Practice on MockMate?
-            </h2>
-
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8 mt-10">
-
-            <div>
-
-              <Video
-                className="text-blue-600 mb-3"
-                size={35}
-              />
-
-              <h3 className="font-semibold text-xl dark:text-white">
-                HD Video Calls
-              </h3>
-
-              <p className="text-gray-600 dark:text-gray-300 mt-3">
-                Real-time peer interviews with crystal-clear
-                audio and video.
+              <p className="max-w-2xl text-lg leading-8 text-slate-300">
+                Spin up a private room instantly, or enter an existing Room ID and continue a live practice session with your partner.
               </p>
-
             </div>
 
-            <div>
+            <div className="grid gap-4 sm:grid-cols-3">
+              {benefits.map((item) => {
+                const Icon = item.icon;
 
-              <Users
-                className="text-green-600 mb-3"
-                size={35}
-              />
-
-              <h3 className="font-semibold text-xl dark:text-white">
-                Peer Collaboration
-              </h3>
-
-              <p className="text-gray-600 dark:text-gray-300 mt-3">
-                Practice with classmates and friends just like
-                a real interview.
-              </p>
-
+                return (
+                  <article
+                    key={item.title}
+                    className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur"
+                  >
+                    <Icon size={20} className="text-sky-300" />
+                    <h3 className="mt-4 text-sm font-semibold text-white">{item.title}</h3>
+                    <p className="mt-2 text-sm leading-6 text-slate-300">{item.description}</p>
+                  </article>
+                );
+              })}
             </div>
 
-            <div>
-
-              <Sparkles
-                className="text-purple-600 mb-3"
-                size={35}
-              />
-
-              <h3 className="font-semibold text-xl dark:text-white">
-                Interview Ready
-              </h3>
-
-              <p className="text-gray-600 dark:text-gray-300 mt-3">
-                Improve confidence, communication, and coding
-                before your dream company interview.
-              </p>
-
+            <div className="flex flex-wrap gap-3 text-sm text-slate-300">
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 backdrop-blur">
+                <Clock3 size={14} className="text-sky-300" />
+                Setup in seconds
+              </span>
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 backdrop-blur">
+                <Users size={14} className="text-sky-300" />
+                Built for two people
+              </span>
             </div>
-
           </div>
 
-        </div>
+          <div className="space-y-6">
+            <div className="rounded-[2rem] border border-white/10 bg-white/10 p-8 shadow-[0_30px_100px_rgba(2,6,23,0.45)] backdrop-blur-xl">
+              <div className="flex items-center gap-4">
+                <div className="rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 p-4 text-white shadow-lg shadow-sky-500/20">
+                  <PlusCircle size={28} />
+                </div>
 
-        {error && (
-          <div className="mt-10 bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 text-center">
-            {error}
+                <div>
+                  <h2 className="text-2xl font-bold text-white">Create a room</h2>
+                  <p className="text-sm text-slate-300">Generate a fresh interview space and share it with your partner.</p>
+                </div>
+              </div>
+
+              <button
+                onClick={createRoom}
+                disabled={loading}
+                className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sky-500 to-indigo-600 px-6 py-4 text-base font-semibold text-white shadow-lg shadow-sky-500/25 transition hover:-translate-y-0.5 hover:from-sky-400 hover:to-indigo-500 disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {loading ? "Creating Room..." : "Create Room"}
+                <ChevronRight size={18} />
+              </button>
+            </div>
+
+            <div className="rounded-[2rem] border border-white/10 bg-slate-900/70 p-8 shadow-[0_30px_100px_rgba(2,6,23,0.35)] backdrop-blur-xl">
+              <div className="flex items-center gap-4">
+                <div className="rounded-2xl bg-emerald-500/15 p-4 text-emerald-300">
+                  <Users size={28} />
+                </div>
+
+                <div>
+                  <h2 className="text-2xl font-bold text-white">Join a room</h2>
+                  <p className="text-sm text-slate-300">Enter an existing Room ID to get into the live session immediately.</p>
+                </div>
+              </div>
+
+              <input
+                value={roomIdInput}
+                onChange={(e) => setRoomIdInput(e.target.value)}
+                placeholder="Enter Room ID"
+                className="mt-6 w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-white placeholder:text-slate-400 outline-none transition focus:border-sky-400 focus:bg-white/10"
+              />
+
+              <button
+                onClick={joinRoom}
+                className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-6 py-4 text-base font-semibold text-white transition hover:bg-white/10"
+              >
+                Join Room
+              </button>
+            </div>
+
+            {error && (
+              <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 px-5 py-4 text-sm text-rose-200">
+                {error}
+              </div>
+            )}
           </div>
-        )}
-
-      </section>
-
+        </section>
+      </div>
     </div>
   );
 }

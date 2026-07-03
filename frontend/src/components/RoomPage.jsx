@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Room, createLocalVideoTrack, createLocalAudioTrack } from 'livekit-client'
+import { Copy, LogOut, Mic, MicOff, Video, VideoOff, Users, Sparkles } from 'lucide-react'
 
 const API_URL = import.meta.env.VITE_API_URL || ''
 
@@ -105,7 +106,6 @@ export default function RoomPage() {
           remoteAudioEls.current = []
           setRemoteCount(0)
         })
-
       } catch (e) {
         console.error(e)
         setError(e.message || 'Unable to join room')
@@ -159,102 +159,164 @@ export default function RoomPage() {
   }
 
   return (
-    <div className="min-h-screen bg-blue-50 dark:bg-gray-900 px-6 py-10 transition-colors">
-      <div className="max-w-7xl mx-auto space-y-8">
-        <div className="rounded-3xl bg-white dark:bg-gray-800 p-8 shadow-xl">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white">LiveKit Mock Interview</h2>
-              <p className="text-gray-600 dark:text-gray-300">Live audio and video with your peer in this room.</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => navigate('/')}
-              className="inline-flex items-center justify-center rounded-full border border-slate-300 dark:border-gray-600 px-6 py-3 text-slate-700 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-gray-700 transition"
-            >
-              Leave Room
-            </button>
-          </div>
-          <div className="mt-6 rounded-2xl border border-blue-100 dark:border-gray-700 bg-blue-50 dark:bg-gray-700 p-4">
-            <p className="text-sm uppercase tracking-wide text-blue-700 mb-2">Room ID</p>
-            <p className="break-all text-blue-900 dark:text-blue-200">{roomId}</p>
-          </div>
-        </div>
+    <div className="relative min-h-screen overflow-hidden bg-slate-950 px-4 py-6 text-white transition-colors sm:px-6 lg:px-8">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.18),transparent_28%),radial-gradient(circle_at_top_right,rgba(168,85,247,0.16),transparent_26%),linear-gradient(135deg,#020617_0%,#111827_58%,#0f172a_100%)]" />
 
-        <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-          <div className="rounded-3xl bg-white p-6 shadow-xl">
-            <div className="flex items-center justify-between mb-4">
+      <div className="relative mx-auto flex min-h-[calc(100vh-3rem)] max-w-7xl flex-col gap-6">
+        <header className="rounded-[2rem] border border-white/10 bg-white/10 p-6 shadow-[0_30px_100px_rgba(2,6,23,0.35)] backdrop-blur-xl sm:p-8">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="space-y-4">
+              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-4 py-2 text-sm font-medium text-emerald-200">
+                <Sparkles size={16} />
+                Live interview room
+              </div>
+
               <div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Live Video</h3>
-                <p className="text-gray-600 dark:text-gray-300">Connected to room: {roomId}</p>
-              </div>
-              <div className="text-sm text-gray-500 dark:text-gray-400">
-                {remoteCount === 0 ? 'Waiting for peer to join...' : '🟢 Peer connected'}
-              </div>
-            </div>
-
-            <div className="grid gap-4 lg:grid-cols-2">
-              <div className="rounded-3xl bg-black p-2">
-                <p className="mb-2 text-sm text-white/80">You {micMuted ? '🔇' : '🎙️'}</p>
-                <div ref={localVideoRef} className="h-72 rounded-2xl bg-black overflow-hidden" />
-              </div>
-              <div className="rounded-3xl bg-black p-2">
-                <p className="mb-2 text-sm text-white/80">Peer</p>
-                <div ref={remoteContainerRef} className="h-72 rounded-2xl bg-black relative overflow-hidden" />
+                <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                  LiveKit Mock Interview
+                </h1>
+                <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
+                  Run a peer interview with live audio, video, and a focused interface that keeps distractions low.
+                </p>
               </div>
             </div>
 
-            <div className="mt-5 flex gap-3 justify-center">
+            <div className="flex flex-wrap gap-3">
               <button
                 type="button"
-                onClick={toggleMic}
-                className={`rounded-full px-6 py-2 text-sm font-medium transition ${
-                  micMuted
-                    ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
+                onClick={() => navigator.clipboard.writeText(roomId)}
+                className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
               >
-                {micMuted ? '🔇 Unmute Mic' : '🎙️ Mute Mic'}
+                <Copy size={16} />
+                Copy Room ID
               </button>
               <button
                 type="button"
-                onClick={toggleCam}
-                className={`rounded-full px-6 py-2 text-sm font-medium transition ${
-                  camOff
-                    ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                onClick={() => navigate('/')}
+                className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-rose-500 to-red-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-rose-500/25 transition hover:from-rose-400 hover:to-red-500"
+              >
+                <LogOut size={16} />
+                Leave Room
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-6 flex flex-wrap gap-3 text-sm text-slate-300">
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2">
+              <Users size={14} className="text-sky-300" />
+              {remoteCount === 0 ? 'Waiting for peer to join' : 'Peer connected'}
+            </span>
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2">
+              Room ID: {roomId}
+            </span>
+          </div>
+        </header>
+
+        <div className="grid flex-1 gap-6 lg:grid-cols-[1.6fr_0.9fr]">
+          <section className="rounded-[2rem] border border-white/10 bg-white/10 p-5 shadow-[0_30px_100px_rgba(2,6,23,0.35)] backdrop-blur-xl sm:p-6">
+            <div className="flex flex-col gap-4 border-b border-white/10 pb-5 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-2xl font-semibold text-white">Live video</h2>
+                <p className="mt-1 text-sm text-slate-300">Keep your camera and microphone ready while your peer joins.</p>
+              </div>
+
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-200">
+                {remoteCount === 0 ? 'Waiting for peer' : 'Peer connected'}
+              </div>
+            </div>
+
+            <div className="mt-5 grid gap-5 lg:grid-cols-2">
+              <div className="overflow-hidden rounded-[1.75rem] border border-white/10 bg-slate-950/90 p-3 shadow-inner shadow-slate-950/50">
+                <div className="mb-3 flex items-center justify-between px-1 text-sm text-slate-300">
+                  <span className="inline-flex items-center gap-2">
+                    <Video size={14} className="text-sky-300" />
+                    You {camOff ? '(camera off)' : ''}
+                  </span>
+                  <span>{micMuted ? 'Muted' : 'Mic on'}</span>
+                </div>
+                <div ref={localVideoRef} className="h-[320px] overflow-hidden rounded-[1.4rem] bg-black sm:h-[360px]" />
+              </div>
+
+              <div className="overflow-hidden rounded-[1.75rem] border border-white/10 bg-slate-950/90 p-3 shadow-inner shadow-slate-950/50">
+                <div className="mb-3 flex items-center justify-between px-1 text-sm text-slate-300">
+                  <span className="inline-flex items-center gap-2">
+                    <Users size={14} className="text-sky-300" />
+                    Peer
+                  </span>
+                  <span>{remoteCount === 0 ? 'Waiting' : 'Connected'}</span>
+                </div>
+                <div ref={remoteContainerRef} className="relative h-[320px] overflow-hidden rounded-[1.4rem] bg-black sm:h-[360px]" />
+              </div>
+            </div>
+
+            <div className="mt-5 flex flex-wrap justify-center gap-3">
+              <button
+                type="button"
+                onClick={toggleMic}
+                className={`inline-flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-semibold transition ${
+                  micMuted
+                    ? 'bg-rose-500/15 text-rose-200 hover:bg-rose-500/25'
+                    : 'bg-white/5 text-white hover:bg-white/10'
                 }`}
               >
-                {camOff ? '📷 Turn On Cam' : '📷 Turn Off Cam'}
+                {micMuted ? <MicOff size={16} /> : <Mic size={16} />}
+                {micMuted ? 'Unmute Mic' : 'Mute Mic'}
+              </button>
+
+              <button
+                type="button"
+                onClick={toggleCam}
+                className={`inline-flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-semibold transition ${
+                  camOff
+                    ? 'bg-rose-500/15 text-rose-200 hover:bg-rose-500/25'
+                    : 'bg-white/5 text-white hover:bg-white/10'
+                }`}
+              >
+                {camOff ? <VideoOff size={16} /> : <Video size={16} />}
+                {camOff ? 'Turn On Cam' : 'Turn Off Cam'}
               </button>
             </div>
 
             {loading && (
-              <div className="mt-6 rounded-2xl bg-slate-50 p-4 text-sm text-slate-700">Joining room...</div>
+              <div className="mt-6 rounded-2xl border border-sky-400/20 bg-sky-500/10 px-4 py-3 text-sm text-sky-100">
+                Joining room...
+              </div>
             )}
+
             {error && (
-              <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+              <div className="mt-6 rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
                 {error}
               </div>
             )}
-          </div>
+          </section>
 
-          <div className="rounded-3xl bg-white dark:bg-gray-800 p-6 shadow-xl">
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">Session info</h3>
-            <p className="text-gray-600 dark:text-gray-300 mb-4">
-              Copy and share this room ID with your peer if they are not already in the room.
-            </p>
-            <div className="rounded-2xl border border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-700 dark:text-gray-100 p-4 mb-4 break-all">
-              {roomId}
+          <aside className="space-y-6">
+            <div className="rounded-[2rem] border border-white/10 bg-white/10 p-6 shadow-[0_30px_100px_rgba(2,6,23,0.35)] backdrop-blur-xl sm:p-7">
+              <h3 className="text-xl font-semibold text-white">Session info</h3>
+              <p className="mt-3 text-sm leading-7 text-slate-300">
+                Share the room ID with your partner if they have not joined yet. The layout is built to keep the interview view clear and responsive.
+              </p>
+
+              <div className="mt-5 rounded-2xl border border-white/10 bg-slate-950/50 p-4 break-all text-sm text-slate-100">
+                {roomId}
+              </div>
+
+              <div className="mt-5 grid gap-3 text-sm text-slate-300">
+                <div className="rounded-2xl bg-white/5 px-4 py-3">Keep your camera centered before the round starts.</div>
+                <div className="rounded-2xl bg-white/5 px-4 py-3">Mute between turns to reduce background noise.</div>
+                <div className="rounded-2xl bg-white/5 px-4 py-3">Use the room ID to reconnect if the page refreshes.</div>
+              </div>
             </div>
-            <button
-              type="button"
-              className="w-full rounded-3xl bg-blue-600 px-6 py-3 text-white hover:bg-blue-700 transition"
-              onClick={() => navigator.clipboard.writeText(roomId)}
-            >
-              Copy Room ID
-            </button>
-          </div>
+
+            <div className="rounded-[2rem] border border-white/10 bg-gradient-to-br from-sky-500/15 to-indigo-500/10 p-6 shadow-[0_30px_100px_rgba(2,6,23,0.25)] backdrop-blur-xl sm:p-7">
+              <h3 className="text-xl font-semibold text-white">Status</h3>
+              <p className="mt-3 text-sm leading-7 text-slate-300">
+                {remoteCount === 0
+                  ? 'Your room is open and waiting for another participant.'
+                  : 'Both participants are ready. Keep the conversation moving.'}
+              </p>
+            </div>
+          </aside>
         </div>
       </div>
     </div>

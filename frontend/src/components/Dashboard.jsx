@@ -1,128 +1,145 @@
-import React from "react";
 import { useNavigate } from "react-router-dom";
+import { Bot, ChevronRight, Sparkles, Video, MessageSquareText } from "lucide-react";
+
 import About from "./About.jsx";
 import Footer from "./Footer.jsx";
-import {
-  Video,
-  Bot,
-  FileText,
-  ArrowRight
-} from "lucide-react";
 
+const features = [
+  {
+    icon: MessageSquareText,
+    title: "AI Mock Interview",
+    description:
+      "Start a theory-focused AI mock interview with generated questions, live voice answers, and instant feedback.",
+    accent: "from-emerald-500 to-teal-600",
+    action: "/interview",
+    actionLabel: "Start AI Mock Interview",
+  },
+  {
+    icon: Video,
+    title: "Peer Interview Room",
+    description:
+      "Go straight into the room flow to create or join a live peer video interview.",
+    accent: "from-sky-500 to-blue-600",
+    action: "/room-selection",
+    actionLabel: "Open Video Call",
+  },
+  {
+    icon: Bot,
+    title: "AI Coding Interview",
+    description:
+      "Start a structured coding interview with setup, live problem solving, and evaluation.",
+    accent: "from-violet-500 to-fuchsia-600",
+    action: "/coding-interview",
+    actionLabel: "Start Coding Interview",
+  },
+];
 
 export default function Dashboard() {
   const navigate = useNavigate();
 
   return (
-    <div className="dark:bg-gray-900 min-h-screen transition-colors">
+    <div className="relative min-h-screen overflow-hidden bg-slate-950 text-white transition-colors">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.24),transparent_28%),radial-gradient(circle_at_top_right,rgba(168,85,247,0.18),transparent_26%),linear-gradient(135deg,#020617_0%,#0f172a_55%,#111827_100%)]" />
 
-      {/* Hero Section */}
-
-      <section className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 text-white py-24">
-
-        <div className="max-w-7xl mx-auto px-8">
-
-          <h1 className="text-6xl font-bold">
-            Ace Your Next Interview
-          </h1>
-
-          <p className="mt-6 text-xl text-blue-100 max-w-2xl">
-            Practice interviews with peers, AI-powered interviewers, and
-            resume-based mock interviews — all in one place.
-          </p>
-
-          <button
-            onClick={() => navigate("/room-selection")}
-            className="mt-10 bg-white text-blue-700 font-semibold px-8 py-4 rounded-xl hover:scale-105 transition flex items-center gap-2"
-          >
-            Start Practicing
-            <ArrowRight size={20} />
-          </button>
-        </div>
-      </section>
-
-      {/* Features */}
-
-      <section className="py-20 bg-gray-100 dark:bg-gray-900 transition-colors">
-
-        <div className="max-w-7xl mx-auto px-8">
-
-          <h2 className="text-4xl font-bold text-center mb-16 dark:text-white">
-            Our Features
-          </h2>
-
-          <div className="grid md:grid-cols-3 gap-10">
-
-            {/* Card 1 */}
-
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-2xl transition p-8">
-
-              <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mb-6">
-                <Video className="text-blue-600" size={30} />
-              </div>
-
-              <h3 className="text-2xl font-bold mb-4 dark:text-white">
-                Video Interview with Peer
-              </h3>
-
-              <p className="text-gray-600 dark:text-gray-300">
-                Join live video interviews with friends or peers to improve
-                communication, confidence and coding skills.
-              </p>
-
+      <section className="relative mx-auto max-w-7xl px-6 pb-20 pt-16 sm:px-8 sm:pt-20 lg:pb-24 lg:pt-24">
+        <div className="grid items-center gap-12 lg:grid-cols-[1.08fr_0.92fr]">
+          <div className="space-y-8">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-sky-200 backdrop-blur">
+              <Sparkles size={16} />
+              MockMate interview studio
             </div>
 
-            {/* Card 2 */}
+            <div className="space-y-6">
+              <h1 className="max-w-3xl text-5xl font-bold tracking-tight text-white sm:text-6xl lg:text-7xl">
+                Practice interviews that feel sharp, structured, and real.
+              </h1>
 
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-2xl transition p-8">
-
-              <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mb-6">
-                <Bot className="text-purple-600" size={30} />
-              </div>
-
-              <h3 className="text-2xl font-bold mb-4 dark:text-white">
-                Interview with AI
-              </h3>
-
-              <p className="text-gray-600 dark:text-gray-300">
-                Practice technical and HR interviews with an intelligent AI
-                interviewer available anytime.
+              <p className="max-w-2xl text-lg leading-8 text-slate-300 sm:text-xl">
+                Choose between a live peer video call or an AI coding interview inside one focused workspace built to help you improve faster.
               </p>
-
             </div>
 
-            {/* Card 3 */}
-
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-2xl transition p-8">
-
-              <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mb-6">
-                <FileText className="text-green-600" size={30} />
-              </div>
-
-              <h3 className="text-2xl font-bold mb-4 dark:text-white">
-                Resume Interview
-              </h3>
-
-              <p className="text-gray-600 dark:text-gray-300">
-                Upload your resume and receive interview questions generated
-                specifically from your projects, skills and experience.
-              </p>
-
+            <div className="flex flex-wrap gap-3 text-sm text-slate-300">
+              <span className="rounded-full border border-white/10 bg-white/5 px-4 py-2 backdrop-blur">Peer practice</span>
+              <span className="rounded-full border border-white/10 bg-white/5 px-4 py-2 backdrop-blur">Coding rounds</span>
             </div>
-
+            <p className="text-sm uppercase tracking-[0.25em] text-slate-400">Choose a mode below</p>
           </div>
 
-        </div>
+          <div className="grid gap-6 md:grid-cols-2">
+            {features.map((feature) => {
+              const Icon = feature.icon;
 
+              return (
+                <button
+                  key={feature.title}
+                  type="button"
+                  onClick={() => navigate(feature.action)}
+                  className="group text-left rounded-[2rem] border border-white/10 bg-white/10 p-6 shadow-[0_30px_100px_rgba(2,6,23,0.45)] backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:border-white/20 hover:bg-white/15 sm:p-8"
+                >
+                  <div className={`inline-flex rounded-2xl bg-gradient-to-br ${feature.accent} p-4 text-white shadow-lg shadow-slate-950/10`}>
+                    <Icon size={26} />
+                  </div>
+
+                  <h2 className="mt-6 text-2xl font-semibold text-white">
+                    {feature.title}
+                  </h2>
+
+                  <p className="mt-4 text-sm leading-7 text-slate-300">
+                    {feature.description}
+                  </p>
+
+                  <div className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-sky-200">
+                    {feature.actionLabel}
+                    <ChevronRight size={16} className="transition group-hover:translate-x-1" />
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </section>
 
-      {/* About */}
+      <section className="relative bg-slate-50 py-20 text-slate-950 dark:bg-slate-900 dark:text-white transition-colors">
+        <div className="mx-auto max-w-7xl px-6 sm:px-8">
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-sky-600 dark:text-sky-300">
+              Key modes
+            </p>
+            <h2 className="mt-4 text-4xl font-bold tracking-tight sm:text-5xl">
+              A unified platform for every kind of practice round.
+            </h2>
+          </div>
 
-     
+          <div className="mt-14 grid gap-6 md:grid-cols-3">
+            {features.map((feature) => {
+              const Icon = feature.icon;
 
-     <About />
-     <Footer />
+              return (
+                <article
+                  key={feature.title}
+                  className="group rounded-3xl border border-white/70 bg-white p-7 shadow-[0_24px_80px_rgba(15,23,42,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_30px_100px_rgba(15,23,42,0.14)] dark:border-slate-800 dark:bg-slate-800"
+                >
+                  <div className={`inline-flex rounded-2xl bg-gradient-to-br ${feature.accent} p-4 text-white shadow-lg shadow-slate-950/10`}>
+                    <Icon size={26} />
+                  </div>
 
+                  <h3 className="mt-6 text-2xl font-semibold text-slate-950 dark:text-white">
+                    {feature.title}
+                  </h3>
+
+                  <p className="mt-4 text-sm leading-7 text-slate-600 dark:text-slate-300">
+                    {feature.description}
+                  </p>
+                </article>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <About />
+      <Footer />
     </div>
   );
 }

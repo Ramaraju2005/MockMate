@@ -1,8 +1,30 @@
-const JUDGE0_URL = process.env.JUDGE0_URL || 'https://judge0-ce.p.rapidapi.com/submissions';
-const JUDGE0_API_KEY = process.env.JUDGE0_API_KEY;
-const JUDGE0_HOST = process.env.JUDGE0_HOST || 'judge0-ce.p.rapidapi.com';
+const DEFAULT_JUDGE0_URL = 'https://ce.judge0.com/submissions';
+
+function buildJudge0Config() {
+  const url = process.env.JUDGE0_URL || DEFAULT_JUDGE0_URL;
+  const apiKey = process.env.JUDGE0_API_KEY?.trim();
+  const host = process.env.JUDGE0_HOST || 'judge0-ce.p.rapidapi.com';
+  const useRapidApi = Boolean(apiKey) && /rapidapi\.com/i.test(url);
+
+  return {
+    submitUrl: useRapidApi ? url : `${url}?base64_encoded=true&wait=true`,
+    resultUrl: useRapidApi ? url : url,
+    headers: useRapidApi
+      ? {
+          'Content-Type': 'application/json',
+          'X-RapidAPI-Key': apiKey,
+          'X-RapidAPI-Host': host,
+        }
+      : {
+          'Content-Type': 'application/json',
+        },
+    useRapidApi,
+    apiKey,
+  };
+}
 
 async function executeCode({ language, code, input }) {
+  const { submitUrl, resultUrl, headers, useRapidApi } = buildJudge0Config();
   const languageId = {
     python: 71,
     javascript: 63,
@@ -11,13 +33,9 @@ async function executeCode({ language, code, input }) {
     c: 50,
   }[language] || 71;
 
-  const response = await fetch(JUDGE0_URL, {
+  const response = await fetch(submitUrl, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-RapidAPI-Key': JUDGE0_API_KEY || '',
-      'X-RapidAPI-Host': JUDGE0_HOST,
-    },
+    headers,
     body: JSON.stringify({
       source_code: Buffer.from(code).toString('base64'),
       language_id: languageId,
@@ -31,20 +49,33 @@ async function executeCode({ language, code, input }) {
   }
 
   const data = await response.json();
-  const token = data.token;
+  const result = useRapidApi ? await pollRapidApiResult(resultUrl, headers, data.token) : data;
 
+  if (!result) {
+    throw new Error('Judge0 did not return a result');
+  }
+
+  const stdout = result.stdout ? Buffer.from(result.stdout, 'base64').toString('utf8') : '';
+  const stderr = result.stderr ? Buffer.from(result.stderr, 'base64').toString('utf8') : '';
+  const compileOutput = result.compile_output ? Buffer.from(result.compile_output, 'base64').toString('utf8') : '';
+
+  return {
+    output: stdout || stderr || compileOutput || 'No output',
+    status: result.status?.description || 'Unknown',
+    error: stderr || compileOutput || '',
+  };
+}
+
+async function pollRapidApiResult(resultUrl, headers, token) {
   if (!token) {
     throw new Error('Judge0 did not return a submission token');
   }
 
   let result = null;
   for (let attempt = 0; attempt < 20; attempt += 1) {
-    const statusResponse = await fetch(`${JUDGE0_URL}/${token}`, {
+    const statusResponse = await fetch(`${resultUrl}/${token}`, {
       method: 'GET',
-      headers: {
-        'X-RapidAPI-Key': JUDGE0_API_KEY || '',
-        'X-RapidAPI-Host': JUDGE0_HOST,
-      },
+      headers,
     });
 
     if (!statusResponse.ok) {
@@ -58,15 +89,7 @@ async function executeCode({ language, code, input }) {
     await new Promise((resolve) => setTimeout(resolve, 500));
   }
 
-  const stdout = result.stdout ? Buffer.from(result.stdout, 'base64').toString('utf8') : '';
-  const stderr = result.stderr ? Buffer.from(result.stderr, 'base64').toString('utf8') : '';
-  const compileOutput = result.compile_output ? Buffer.from(result.compile_output, 'base64').toString('utf8') : '';
-
-  return {
-    output: stdout || stderr || compileOutput || 'No output',
-    status: result.status?.description || 'Unknown',
-    error: stderr || compileOutput || '',
-  };
+  return result;
 }
 
 module.exports = {

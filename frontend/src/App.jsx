@@ -7,6 +7,8 @@ import Dashboard from './components/Dashboard';
 import LoginPage from './components/LoginPage';
 import RoomSelectionPage from './components/RoomSelectionPage';
 import RoomPage from './components/RoomPage';
+import InterviewPage from './components/InterviewPage';
+import CodingInterviewPage from './components/CodingInterviewPage';
 
 // A simple wrapper to protect routes that require authentication
 const ProtectedRoute = ({ children }) => {
@@ -81,6 +83,22 @@ function App() {
                       <RoomPage />
                     </ProtectedRoute>
                   } 
+                />
+                <Route
+                  path="/interview"
+                  element={
+                    <ProtectedRoute>
+                      <InterviewPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/coding-interview"
+                  element={
+                    <ProtectedRoute>
+                      <CodingInterviewPage />
+                    </ProtectedRoute>
+                  }
                 />
                 
                 {/* Fallback route */}

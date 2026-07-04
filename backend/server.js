@@ -11,22 +11,23 @@ const { AccessToken } = require("livekit-server-sdk");
 const compileRoute = require("./routes/compile");
 const sessionRoute = require("./routes/session");
 const { generateQuestions, evaluateAnswers } = require('./utils/aiInterview');
-const { generateCodingQuestions, evaluateCodingSession } = require('./utils/codingInterview');
-const { executeCode } = require('./utils/judge0');
+const { generateCodingQuestions, evaluateCodingSession, generateInterviewerResponse } = require('./utils/codingInterview');
+const { executeCode } = require('./utils/agenticExecutor');
 const { buildLanguageTemplate } = require('./utils/languageTemplates');
+const Groq = require("groq-sdk");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const FRONTEND_URL = process.env.FRONTEND_URL || "https://8zsgjjtr-5173.inc1.devtunnels.ms";
-const allowedOrigins = [FRONTEND_URL, "https://8zsgjjtr-5173.inc1.devtunnels.ms"];
+const FRONTEND_URL = process.env.FRONTEND_URL || "https://b2zkf5jm-5173.inc1.devtunnels.ms";
+const allowedOrigins = [FRONTEND_URL, "https://b2zkf5jm-5173.inc1.devtunnels.ms"];
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin || allowedOrigins.includes(origin) || origin.includes("localhost") || origin.includes("127.0.0.1") || origin.endsWith("devtunnels.ms")) {
         callback(null, true);
       } else {
-        callback(new Error("CORS policy: This origin is not allowed."));
+        callback(new Error(`CORS policy: This origin (${origin}) is not allowed.`));
       }
     },
     credentials: true,
@@ -147,13 +148,14 @@ app.post('/api/coding/template', isLoggedIn, (req, res) => {
 
 app.post('/api/coding/execute', isLoggedIn, async (req, res) => {
   try {
-    const { language, editableCode, readOnlyCode } = req.body || {};
+    const { language, editableCode, readOnlyCode, question } = req.body || {};
     const normalizedLanguage = normalizeCodingLanguage(language);
     const fullCode = [editableCode || '', readOnlyCode || ''].join('\n');
     const execution = await executeCode({
       language: normalizedLanguage,
       code: fullCode,
       input: '',
+      question,
     });
 
     res.json(execution);
@@ -165,7 +167,25 @@ app.post('/api/coding/execute', isLoggedIn, async (req, res) => {
   }
 });
 
-app.post('/api/coding/evaluate', isLoggedIn, async (req, res) => {
+app.post('/api/coding/interviewer-respond', async (req, res) => {
+  try {
+    const { question, currentCode, transcript, history = [] } = req.body || {};
+    const responseText = await generateInterviewerResponse({
+      question,
+      currentCode,
+      transcript,
+      history,
+    });
+    res.json({ response: responseText });
+  } catch (error) {
+    console.error('Interviewer response failed:', error);
+    res.status(500).json({
+      error: error.message || 'Failed to generate interviewer response',
+    });
+  }
+});
+
+app.post('/api/coding/evaluate', async (req, res) => {
   try {
     const { questions = [], sessionResults = [] } = req.body || {};
     const report = await evaluateCodingSession({ questions, sessionResults });

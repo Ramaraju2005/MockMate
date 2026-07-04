@@ -31,6 +31,18 @@ const sessionSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    interviewType: {
+      type: String,
+      default: "general",
+    },
+    questions: {
+      type: [mongoose.Schema.Types.Mixed],
+      default: [],
+    },
+    report: {
+      type: [mongoose.Schema.Types.Mixed],
+      default: [],
+    },
   },
   {
     timestamps: true,

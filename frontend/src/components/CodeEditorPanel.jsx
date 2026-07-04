@@ -25,7 +25,7 @@ if __name__ == "__main__":
     main()`,
 };
 
-export default function CodeEditorPanel({ onOutput, roomId, onSave, onCodeChange, isInterviewee, onToggleRole }) {
+export default function CodeEditorPanel({ onOutput, roomId, onSave, onCodeChange, isInterviewee, onToggleRole, onRun }) {
   const { theme } = useContext(ThemeContext);
   const [language, setLanguage] = useState("java");
   const [code, setCode] = useState(BOILERPLATES["java"]);
@@ -99,20 +99,24 @@ export default function CodeEditorPanel({ onOutput, roomId, onSave, onCodeChange
     if (typeof onOutput === "function") onOutput(runningMessage);
 
     try {
-      const result = await compile(language, code, "");
-
-      let out = "";
-      if (result.output) {
-        out = result.output;
-      } else if (result.error) {
-        out = result.error;
+      if (typeof onRun === "function") {
+        await onRun(language, code);
       } else {
-        out = JSON.stringify(result, null, 2);
-      }
+        const result = await compile(language, code, "");
 
-      if (typeof onOutput === "function") onOutput(out);
-      if (roomId) {
-        socket.emit("console-output", { roomId, output: out });
+        let out = "";
+        if (result.output) {
+          out = result.output;
+        } else if (result.error) {
+          out = result.error;
+        } else {
+          out = JSON.stringify(result, null, 2);
+        }
+
+        if (typeof onOutput === "function") onOutput(out);
+        if (roomId) {
+          socket.emit("console-output", { roomId, output: out });
+        }
       }
     } catch (err) {
       console.error(err);

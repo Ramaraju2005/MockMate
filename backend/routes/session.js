@@ -44,4 +44,37 @@ router.post("/save", isLoggedIn, async (req, res) => {
   }
 });
 
+router.post("/coding/save", isLoggedIn, async (req, res) => {
+  try {
+    const {
+      questions = [],
+      report = [],
+      interviewerName = "",
+      intervieweeName = "",
+      interviewDate,
+      durationSeconds = 0,
+    } = req.body;
+
+    const session = new Session({
+      roomId: `coding-${req.user?.id || req.sessionID}-${Date.now()}`,
+      interviewerName,
+      intervieweeName,
+      interviewDate: interviewDate ? new Date(interviewDate) : new Date(),
+      durationSeconds,
+      editorText: JSON.stringify({ questions, report }),
+      code: JSON.stringify(report.map((item) => item.code || "")),
+      interviewType: "coding",
+      questions,
+      report,
+    });
+
+    await session.save();
+
+    res.json({ success: true, sessionId: session._id });
+  } catch (error) {
+    console.error("Save coding session failed:", error, { body: req.body });
+    res.status(500).json({ error: error?.message || "Failed to save coding interview report" });
+  }
+});
+
 module.exports = router;

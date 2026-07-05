@@ -6,7 +6,6 @@ const BACKEND_URL = process.env.BACKEND_URL || `https://b2zkf5jm-3000.inc1.devtu
 const FRONTEND_URL = process.env.FRONTEND_URL || `https://b2zkf5jm-5173.inc1.devtunnels.ms`;
 
 const GOOGLE_CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL || `${BACKEND_URL}/auth/google/callback`;
-console.log("GOOGLE_CALLBACK_URL =", GOOGLE_CALLBACK_URL);
 
 console.log("BACKEND_URL =", BACKEND_URL);
 console.log("GOOGLE_CALLBACK_URL =", GOOGLE_CALLBACK_URL);

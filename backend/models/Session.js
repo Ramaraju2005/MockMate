@@ -7,6 +7,11 @@ const sessionSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    userId: {
+      type: String,
+      required: false,
+      index: true,
+    },
     interviewerName: {
       type: String,
       default: "",

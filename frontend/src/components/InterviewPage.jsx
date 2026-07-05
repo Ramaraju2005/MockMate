@@ -14,6 +14,8 @@ export default function InterviewPage() {
   const [timerMinutes, setTimerMinutes] = useState(0)
   const [report, setReport] = useState([])
   const [loading, setLoading] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [saveStatus, setSaveStatus] = useState('')
   const [error, setError] = useState('')
 
   const resetFlow = () => {
@@ -23,6 +25,8 @@ export default function InterviewPage() {
     setReport([])
     setError('')
     setLoading(false)
+    setSaving(false)
+    setSaveStatus('')
   }
 
   const handleStart = async (settings) => {
@@ -80,6 +84,44 @@ export default function InterviewPage() {
     }
   }
 
+  const handleSave = async () => {
+    if (!report.length) {
+      setSaveStatus('Nothing to save yet.')
+      return
+    }
+
+    setSaving(true)
+    setSaveStatus('')
+
+    try {
+      const response = await fetch(`${API_URL}/api/session/theory/save`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          questions,
+          report,
+          interviewerName: 'AI Theory Interviewer',
+          intervieweeName: 'Candidate',
+          interviewDate: new Date().toISOString(),
+          durationSeconds: timerMinutes * 60,
+        }),
+      })
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Unable to save the theory interview.')
+      }
+
+      setSaveStatus('Saved to MongoDB successfully.')
+    } catch (requestError) {
+      setSaveStatus(requestError.message || 'Failed to save the interview.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const goHome = () => navigate('/')
 
   return (
@@ -109,6 +151,9 @@ export default function InterviewPage() {
         <InterviewReport
           report={report}
           onRestart={resetFlow}
+          onSave={handleSave}
+          saving={saving}
+          saveStatus={saveStatus}
         />
       )}
     </div>

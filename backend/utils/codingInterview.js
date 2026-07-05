@@ -361,20 +361,23 @@ Do not include markdown.`;
   }
 
   // Fallback if consolidation fails
-  return sessionSummary.map((result, index) => ({
-    question: result.question,
-    problemStatement: result.problemStatement,
-    code: result.code,
-    executionResult: result.executionResult,
-    evaluation: `Technical Code Review:\n${codeEval}\n\nCommunication Review:\n${commEval}`,
-    optimizedSolution: 'Please review your solution against optimal algorithms.',
-    timeComplexity: 'O(N)',
-    spaceComplexity: 'O(N)',
-    improvements: 'Improve modular design and explain complexity before coding.',
-    codingScore: 75,
-    communicationScore: 75,
-    overallScore: 75,
-  })).map((item, index) => normalizeCodingFeedback(item, sessionSummary[index] || {}));
+  return sessionSummary.map((submission) => {
+    const fallbackItem = {
+      question: submission.question,
+      problemStatement: submission.problemStatement,
+      code: submission.code,
+      executionResult: submission.executionResult,
+      evaluation: `Technical Code Review:\nCode execution output was: ${submission.executionResult || 'No output'}.\n\nCommunication Review:\nTranscript recorded was: ${submission.transcript || 'No conversation transcript.'}`,
+      optimizedSolution: 'Please review your solution against optimal algorithms.',
+      timeComplexity: 'O(N)',
+      spaceComplexity: 'O(N)',
+      improvements: 'Improve modular design and explain complexity before coding.',
+      codingScore: 75,
+      communicationScore: 75,
+      overallScore: 75,
+    };
+    return normalizeCodingFeedback(fallbackItem, submission);
+  });
 }
 
 async function generateInterviewerResponse({ question, currentCode, transcript, history = [] }) {

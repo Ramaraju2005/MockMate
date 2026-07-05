@@ -78,12 +78,13 @@ async function callGemini(prompt) {
 }
 
 function getFallbackQuestions({ subject, difficulty, questionCount }) {
+  const subjectStr = Array.isArray(subject) ? subject.join(', ') : subject;
   const baseQuestions = [
-    `Explain the core concepts of ${subject} in simple terms.`,
-    `Describe a real-world scenario where ${subject} is applied.`,
-    `What are the main advantages and disadvantages of ${subject}?`,
-    `How would you troubleshoot a common issue in ${subject}?`,
-    `Compare ${subject} with a related topic and explain the difference.`,
+    `Explain the core concepts of ${subjectStr} in simple terms.`,
+    `Describe a real-world scenario where ${subjectStr} is applied.`,
+    `What are the main advantages and disadvantages of ${subjectStr}?`,
+    `How would you troubleshoot a common issue in ${subjectStr}?`,
+    `Compare ${subjectStr} with a related topic and explain the difference.`,
   ];
 
   const tailored = baseQuestions.map((question, index) => {
@@ -113,8 +114,9 @@ function getFallbackReport({ questions, answers }) {
 }
 
 async function generateQuestions({ subject, difficulty, questionCount }) {
+  const subjectStr = Array.isArray(subject) ? subject.join(', ') : subject;
   const prompt = `You are an expert technical interviewer.
-Create ${questionCount} interview questions for the subject "${subject}" at ${difficulty} difficulty.
+Create ${questionCount} interview questions covering the following subject(s): "${subjectStr}" at ${difficulty} difficulty.
 Return ONLY a valid JSON array of strings. Each string should be a concise interview question.
 Do not include explanations or markdown.`;
 

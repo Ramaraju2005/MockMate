@@ -17,6 +17,12 @@ export default function InterviewRun({
   const [isSpeaking, setIsSpeaking] = useState(false)
 
   const recognitionRef = useRef(null)
+  const shouldStartListeningRef = useRef(false)
+  const isListeningRef = useRef(false)
+
+  useEffect(() => {
+    isListeningRef.current = isListening
+  }, [isListening])
 
   const currentQuestion = questions[currentIndex]
 
@@ -25,10 +31,35 @@ export default function InterviewRun({
     [currentIndex, questions.length]
   )
 
+  const startListening = () => {
+    if (!recognitionRef.current) return
+
+    shouldStartListeningRef.current = true
+
+    if (isListeningRef.current) return
+
+    setTranscript('')
+    setFinalTranscript('')
+    setError('')
+
+    try {
+      recognitionRef.current.start()
+      setIsListening(true)
+    } catch (e) {
+      console.warn('Speech recognition start failed:', e)
+    }
+  }
+
   const speakQuestion = (text) => {
     if (!('speechSynthesis' in window)) return
 
     window.speechSynthesis.cancel()
+
+    // Stop microphone so we don't transcribe the AI speaking the question
+    shouldStartListeningRef.current = false
+    if (recognitionRef.current && isListeningRef.current) {
+      recognitionRef.current.stop()
+    }
 
     const utterance = new SpeechSynthesisUtterance(text)
     utterance.rate = 0.95
@@ -39,6 +70,8 @@ export default function InterviewRun({
     }
     utterance.onend = () => {
       setIsSpeaking(false)
+      // Auto-start mic when the AI finishes speaking
+      startListening()
     }
     utterance.onerror = () => {
       setIsSpeaking(false)
@@ -100,6 +133,14 @@ export default function InterviewRun({
 
     recognition.onend = () => {
       setIsListening(false)
+      if (shouldStartListeningRef.current) {
+        try {
+          recognition.start()
+          setIsListening(true)
+        } catch (e) {
+          console.warn('Speech recognition start failed onend:', e)
+        }
+      }
     }
 
     recognitionRef.current = recognition
@@ -129,6 +170,7 @@ export default function InterviewRun({
       }
     } else {
       cancelSpeech()
+      startListening()
     }
     return () => {
       cancelSpeech()
@@ -141,27 +183,24 @@ export default function InterviewRun({
     finalAnswers[currentIndex] = finalTranscript.trim()
 
     cancelSpeech()
+    shouldStartListeningRef.current = false
+    if (recognitionRef.current) {
+      recognitionRef.current.stop()
+    }
     onComplete(finalAnswers)
   }
 
   const toggleListening = () => {
     if (!recognitionRef.current) return
 
-    if (!isListening) {
-      cancelSpeech()
-    }
-
     if (isListening) {
+      shouldStartListeningRef.current = false
       recognitionRef.current.stop()
       return
     }
 
-    setTranscript('')
-    setFinalTranscript('')
-    setError('')
-
-    recognitionRef.current.start()
-    setIsListening(true)
+    cancelSpeech()
+    startListening()
   }
 
   const saveAnswerAndAdvance = () => {
@@ -173,7 +212,8 @@ export default function InterviewRun({
 
     cancelSpeech()
 
-    if (isListening) {
+    shouldStartListeningRef.current = false
+    if (isListening && recognitionRef.current) {
       recognitionRef.current.stop()
     }
 

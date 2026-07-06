@@ -33,6 +33,7 @@ app.use(
   })
 );
 app.use(express.json());
+app.use(cors({ origin: 'https://vercel.app' }));
 
 app.use(
   session({

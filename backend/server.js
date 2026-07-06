@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const crypto = require('crypto');
+const { MongoStore } = require('connect-mongo');
 
 require('dotenv').config();
 const session = require("express-session");
@@ -19,6 +20,10 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const FRONTEND_URL = process.env.FRONTEND_URL || "https://b2zkf5jm-5173.inc1.devtunnels.ms";
 const allowedOrigins = [FRONTEND_URL, "https://b2zkf5jm-5173.inc1.devtunnels.ms"];
+const mongoUri = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/mock-interview";
+const isProduction = process.env.NODE_ENV === "production";
+
+app.set("trust proxy", 1);
 
 app.use(
   cors({
@@ -33,17 +38,23 @@ app.use(
   })
 );
 app.use(express.json());
-app.use(cors({ origin: 'https://vercel.app' }));
+// app.use(cors({ origin: 'https://vercel.app' }));
 
 app.use(
   session({
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
+    proxy: true,
+    store: new MongoStore({
+      mongoUrl: mongoUri,
+      collectionName: "sessions",
+      ttl: 24 * 60 * 60,
+    }),
     cookie: {
       httpOnly: true,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
+      sameSite: isProduction ? "none" : "lax",
+      secure: isProduction,
       maxAge: 24 * 60 * 60 * 1000,
     },
   })
@@ -264,9 +275,6 @@ app.get("/api/livekit/token", isLoggedIn, async (req, res) => {
   }
 });
 
-// MongoDB Connection
-const mongoUri = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/mock-interview";
-
 mongoose
   .connect(mongoUri, {
     useNewUrlParser: true,
@@ -335,7 +343,11 @@ app.post("/api/auth/logout", (req, res) => {
       if (destroyErr) {
         console.error("Session destroy error:", destroyErr);
       }
-      res.clearCookie("connect.sid");
+      res.clearCookie("connect.sid", {
+        httpOnly: true,
+        sameSite: isProduction ? "none" : "lax",
+        secure: isProduction,
+      });
       res.json({ message: "Logged out." });
     });
   });

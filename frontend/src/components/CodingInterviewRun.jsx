@@ -4,6 +4,8 @@ import { Group, Panel, Separator } from 'react-resizable-panels'
 import { ThemeContext } from '../context/ThemeContext'
 import OutputConsole from './OutputConsole'
 
+const API_URL = import.meta.env.VITE_API_URL || ''
+
 const languageOptions = [
   { label: 'Python', value: 'python' },
   { label: 'Java', value: 'java' },
@@ -156,7 +158,7 @@ export default function CodingInterviewRun({ questions, timerMinutes, onComplete
       setIsGeneratingResponse(true)
 
       try {
-        const response = await fetch('/api/coding/interviewer-respond', {
+        const response = await fetch(`${API_URL}/api/coding/interviewer-respond`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
@@ -267,7 +269,7 @@ export default function CodingInterviewRun({ questions, timerMinutes, onComplete
     setExecutionResult('Running...')
 
     try {
-      const response = await fetch('/api/compile', {
+      const response = await fetch(`${API_URL}/api/compile`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

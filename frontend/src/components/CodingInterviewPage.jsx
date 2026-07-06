@@ -5,7 +5,7 @@ import CodingInterviewReport from './CodingInterviewReport.jsx'
 import CodingInterviewRun from './CodingInterviewRun.jsx'
 import CodingInterviewSetup from './CodingInterviewSetup.jsx'
 
-const API_URL = import.meta.env.VITE_API_URL || ''
+const API_URL = import.meta.env.VITE_API_URL ;
 
 export default function CodingInterviewPage() {
   const navigate = useNavigate()

@@ -1,42 +1,23 @@
 const express = require("express");
-const Groq = require("groq-sdk");
+const { executeCode } = require("../utils/judge0");
 
 const router = express.Router();
 
 router.post("/", async (req, res) => {
   try {
-    const { language, code, input = "" } = req.body;
+    const { language, code, input = "" } = req.body || {};
 
-    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+    if (!String(code || "").trim()) {
+      return res.status(400).json({ error: "Code is required" });
+    }
 
-    const prompt = `You are a code execution engine. Execute the following ${language} code and return ONLY the output.
-
-Rules:
-- If the code runs successfully: print ONLY the program's stdout output, nothing else.
-- If there is a compile-time error: print in this format:
-  ❌ Compile Error:
-  Line <N>: <error message>
-- If there is a runtime error: print in this format:
-  ❌ Runtime Error:
-  <ErrorType>: <message> (at line <N> if known)
-- Do NOT add explanations, suggestions, or fixes.
-- Do NOT wrap output in code blocks or quotes.
-${input ? `\nStdin input:\n${input}` : ""}
-
-Code:
-\`\`\`${language}
-${code}
-\`\`\``;
-
-    const response = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: 512,
-      temperature: 0,
+    const execution = await executeCode({
+      language,
+      code,
+      input,
     });
 
-    const output = response.choices[0].message.content.trim();
-    return res.json({ output });
+    return res.json(execution);
 
   } catch (err) {
     console.error(err.message);

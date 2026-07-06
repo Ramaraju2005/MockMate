@@ -2,8 +2,8 @@ require("dotenv").config();
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const PORT = process.env.PORT || 3000;
-const BACKEND_URL = process.env.BACKEND_URL || `https://b2zkf5jm-3000.inc1.devtunnels.ms`;
-const FRONTEND_URL = process.env.FRONTEND_URL || `https://b2zkf5jm-5173.inc1.devtunnels.ms`;
+const BACKEND_URL = process.env.BACKEND_URL || process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
+const FRONTEND_URL = process.env.FRONTEND_URL || "";
 
 const GOOGLE_CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL || `${BACKEND_URL}/auth/google/callback`;
 

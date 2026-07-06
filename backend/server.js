@@ -13,13 +13,22 @@ const sessionRoute = require("./routes/session");
 const { generateQuestions, evaluateAnswers } = require('./utils/aiInterview');
 const { generateCodingQuestions, evaluateCodingSession, generateInterviewerResponse } = require('./utils/codingInterview');
 const { executeCode } = require('./utils/agenticExecutor');
-const { buildLanguageTemplate } = require('./utils/languageTemplates');
 const Groq = require("groq-sdk");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const FRONTEND_URL = process.env.FRONTEND_URL || "https://b2zkf5jm-5173.inc1.devtunnels.ms";
-const allowedOrigins = [FRONTEND_URL, "https://b2zkf5jm-5173.inc1.devtunnels.ms"];
+const FRONTEND_URL = process.env.FRONTEND_URL || "";
+const allowedOrigins = [
+  ...String(process.env.FRONTEND_URLS || FRONTEND_URL || "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean),
+  ...(
+    process.env.NODE_ENV !== "production"
+      ? ["http://localhost:5173", "http://127.0.0.1:5173"]
+      : []
+  ),
+];
 const mongoUri = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/mock-interview";
 const isProduction = process.env.NODE_ENV === "production";
 
@@ -28,7 +37,7 @@ app.set("trust proxy", 1);
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin) || origin.includes("localhost") || origin.includes("127.0.0.1") || origin.endsWith("devtunnels.ms")) {
+      if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
         callback(new Error(`CORS policy: This origin (${origin}) is not allowed.`));
@@ -94,7 +103,7 @@ const rooms = new Map();
 
 app.post('/api/room', isLoggedIn, (req, res) => {
   const roomId = crypto.randomUUID();
-  const roomUrl = `${FRONTEND_URL}/room/${roomId}`;
+  const roomUrl = FRONTEND_URL ? `${FRONTEND_URL}/room/${roomId}` : `/room/${roomId}`;
 
   rooms.set(roomId, {
     participants: new Set([req.user.id || req.sessionID]),
@@ -144,11 +153,29 @@ app.post('/api/coding/generate', isLoggedIn, async (req, res) => {
 
 app.post('/api/coding/template', isLoggedIn, (req, res) => {
   try {
-    const { question = {}, language } = req.body || {};
+    const { language } = req.body || {};
     const normalizedLanguage = normalizeCodingLanguage(language);
-    const template = buildLanguageTemplate(question, normalizedLanguage);
+    const boilerplates = {
+      java: `public class Main {
+  public static void main(String[] args) {
+    System.out.println("Hello MockMate");
+  }
+}`,
+      cpp: `#include <iostream>
+using namespace std;
 
-    res.json(template);
+int main() {
+    cout << "Hello MockMate" << endl;
+    return 0;
+}`,
+      python: `def main():
+    print("Hello MockMate")
+
+if __name__ == "__main__":
+    main()`,
+    };
+
+    res.json({ editableSection: boilerplates[normalizedLanguage] || boilerplates.python, readOnlySection: '' });
   } catch (error) {
     console.error('Coding template generation failed:', error);
     res.status(500).json({
@@ -317,7 +344,7 @@ app.get("/auth/google/callback", (req, res, next) => {
     }
 
     if (!user) {
-      return res.redirect(`${FRONTEND_URL}/?login=failed`);
+      return res.redirect(FRONTEND_URL ? `${FRONTEND_URL}/?login=failed` : "/?login=failed");
     }
 
     req.logIn(user, (loginErr) => {
@@ -327,7 +354,7 @@ app.get("/auth/google/callback", (req, res, next) => {
       }
 
       console.log("LOGIN SUCCESS");
-      return res.redirect(`${FRONTEND_URL}/?login=success`);
+      return res.redirect(FRONTEND_URL ? `${FRONTEND_URL}/?login=success` : "/?login=success");
     });
   })(req, res, next);
 });

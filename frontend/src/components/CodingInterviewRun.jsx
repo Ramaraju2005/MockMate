@@ -37,8 +37,6 @@ export default function CodingInterviewRun({ questions, timerMinutes, onComplete
   const [currentIndex, setCurrentIndex] = useState(0)
   const [language, setLanguage] = useState('python')
   const [editableCode, setEditableCode] = useState(BOILERPLATES.python)
-  const [readOnlyCode, setReadOnlyCode] = useState('')
-  const [loadingTemplate, setLoadingTemplate] = useState(false)
   const [scratchPad, setScratchPad] = useState('')
   const [transcript, setTranscript] = useState('')
   const [isListening, setIsListening] = useState(false)
@@ -175,10 +173,11 @@ export default function CodingInterviewRun({ questions, timerMinutes, onComplete
           setChatHistory((prev) => [...prev, { role: 'interviewer', text: data.response }])
         } else {
           console.error('Interviewer respond failed:', data)
+          setChatHistory((prev) => [...prev, { role: 'interviewer', text: 'Tell me a bit more about the idea you are considering.' }])
         }
       } catch (err) {
         console.error('Failed to get interviewer response:', err)
-        setChatHistory((prev) => [...prev, { role: 'interviewer', text: 'Sorry, I missed that. Could you repeat?' }])
+        setChatHistory((prev) => [...prev, { role: 'interviewer', text: 'I missed that. Could you repeat your last thought?' }])
       } finally {
         setIsGeneratingResponse(false)
       }
@@ -188,10 +187,9 @@ export default function CodingInterviewRun({ questions, timerMinutes, onComplete
   // Load starter templates
   useEffect(() => {
     if (recognitionRef.current) {
-      recognitionRef.current.shouldRestart = false;
+      recognitionRef.current.shouldRestart = false
     }
     setEditableCode(BOILERPLATES[language] || BOILERPLATES.python)
-    setReadOnlyCode('')
   }, [currentQuestion, language])
 
   // Initialize session results array
